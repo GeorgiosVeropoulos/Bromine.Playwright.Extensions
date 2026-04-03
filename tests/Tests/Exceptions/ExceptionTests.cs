@@ -21,10 +21,11 @@ public class ExceptionTests : TestBase
     }
 
     [Test]
-    public void VerifyNotFoundLocatorIsNotVisible()
+    public async Task VerifyNotFoundLocatorIsNotVisible()
     {
         var invalidLocator = Page.Locator("[data-qa='null']");
-        invalidLocator.Should().BeHiddenAsync().BeVisibleAsync();
+        await invalidLocator.Should().BeHiddenAsync()
+            .Not.BeVisibleAsync();
 
     }
 }

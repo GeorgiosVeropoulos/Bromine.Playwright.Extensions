@@ -1,3 +1,4 @@
+using Bromine.Playwright.Extensions.Configuration;
 using Microsoft.Playwright;
 
 namespace Bromine.Playwright.Extensions.Builders;
