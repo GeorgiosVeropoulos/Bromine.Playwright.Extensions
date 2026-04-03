@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bromine.Playwright.Extensions", "src\Bromine.Playwright.Extensions.csproj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bromine.Playwright.Extensions.Analyzers", "Analyzers\Bromine.Playwright.Extensions.Analyzers.csproj", "{BACD3A60-A12A-49FF-98F2-3D7AB5386280}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bromine.Playwright.Extensions.Tests", "tests\Bromine.Playwright.Extensions.Tests.csproj", "{3B3A2264-6CE9-4F45-B433-93EE71E8CB55}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BACD3A60-A12A-49FF-98F2-3D7AB5386280}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BACD3A60-A12A-49FF-98F2-3D7AB5386280}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BACD3A60-A12A-49FF-98F2-3D7AB5386280}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BACD3A60-A12A-49FF-98F2-3D7AB5386280}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3B3A2264-6CE9-4F45-B433-93EE71E8CB55}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3B3A2264-6CE9-4F45-B433-93EE71E8CB55}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3B3A2264-6CE9-4F45-B433-93EE71E8CB55}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3B3A2264-6CE9-4F45-B433-93EE71E8CB55}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

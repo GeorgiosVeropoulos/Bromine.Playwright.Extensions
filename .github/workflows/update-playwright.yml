@@ -1,0 +1,84 @@
+name: Update Playwright
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'  # Every Monday at 8 AM UTC
+  workflow_dispatch:       # Allow manual trigger
+
+env:
+  DOTNET_VERSION: '8.0.x'
+
+jobs:
+  check-and-update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Get current Playwright version
+        id: current
+        run: |
+          CURRENT=$(grep -oP 'Include="Microsoft\.Playwright" Version="\K[^"]+' src/Bromine.Playwright.Extensions.csproj)
+          echo "VERSION=$CURRENT" >> $GITHUB_OUTPUT
+          echo "Current version: $CURRENT"
+
+      - name: Get latest Playwright version from NuGet
+        id: latest
+        run: |
+          LATEST=$(curl -s https://api.nuget.org/v3-flatcontainer/microsoft.playwright/index.json \
+            | jq -r '.versions | map(select(test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))) | last')
+          echo "VERSION=$LATEST" >> $GITHUB_OUTPUT
+          echo "Latest version: $LATEST"
+
+      - name: Compare versions
+        id: compare
+        run: |
+          if [ "${{ steps.current.outputs.VERSION }}" = "${{ steps.latest.outputs.VERSION }}" ]; then
+            echo "UPDATE=false" >> $GITHUB_OUTPUT
+            echo "Already up to date."
+          else
+            echo "UPDATE=true" >> $GITHUB_OUTPUT
+            echo "Update available: ${{ steps.current.outputs.VERSION }} -> ${{ steps.latest.outputs.VERSION }}"
+          fi
+
+      - name: Update Playwright version in csproj files
+        if: steps.compare.outputs.UPDATE == 'true'
+        run: |
+          OLD="${{ steps.current.outputs.VERSION }}"
+          NEW="${{ steps.latest.outputs.VERSION }}"
+          sed -i "s|Microsoft.Playwright\" Version=\"$OLD\"|Microsoft.Playwright\" Version=\"$NEW\"|g" \
+            src/Bromine.Playwright.Extensions.csproj \
+            tests/Bromine.Playwright.Extensions.Tests.csproj
+
+      - name: Build and test with new version
+        if: steps.compare.outputs.UPDATE == 'true'
+        run: |
+          dotnet restore --source https://api.nuget.org/v3/index.json
+          dotnet build -c Release --no-restore
+          pwsh tests/bin/Release/net8.0/playwright.ps1 install chromium --with-deps
+          dotnet test tests/Bromine.Playwright.Extensions.Tests.csproj -c Release --no-build
+        env:
+          CI: true
+
+      - name: Create Pull Request
+        if: steps.compare.outputs.UPDATE == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update Microsoft.Playwright to ${{ steps.latest.outputs.VERSION }}"
+          title: "chore: update Microsoft.Playwright to ${{ steps.latest.outputs.VERSION }}"
+          body: |
+            Automated update of `Microsoft.Playwright` dependency.
+
+            - **From:** `${{ steps.current.outputs.VERSION }}`
+            - **To:** `${{ steps.latest.outputs.VERSION }}`
+
+            Tests have passed with the new version.
+          branch: deps/playwright-${{ steps.latest.outputs.VERSION }}
+          labels: dependencies
+

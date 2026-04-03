@@ -1,0 +1,54 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<LangVersion>latest</LangVersion>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<RootNamespace>Bromine.Playwright.Extensions</RootNamespace>
+
+		<!-- NuGet Package Metadata -->
+		<IsPackable>true</IsPackable>
+		<PackageId>Bromine.Playwright.Extensions</PackageId>
+		<Version>1.0.0</Version>
+		<Authors>George Veropoulos</Authors>
+		<Company>Bromine</Company>
+		<Description>Playwright extensions library providing fluent assertions (.Should()), browser/context builder patterns, and enhanced Page/Locator extension methods for E2E test automation.</Description>
+		<PackageTags>playwright;testing;automation;e2e;fluent-assertions;builder-pattern</PackageTags>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<RepositoryType>git</RepositoryType>
+
+		<!-- XML Documentation -->
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<NoWarn>$(NoWarn);CS1591</NoWarn>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Playwright" Version="1.56.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="..\README.md" Pack="true" PackagePath="\" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- Bundle the analyzer into this NuGet package and run it during build -->
+		<ProjectReference Include="..\Analyzers\Bromine.Playwright.Extensions.Analyzers.csproj"
+		                  ReferenceOutputAssembly="false"
+		                  OutputItemType="Analyzer"
+		                  SetTargetFramework="TargetFramework=netstandard2.0" />
+	</ItemGroup>
+
+	<!-- Pack the analyzer DLL into analyzers/dotnet/cs so NuGet consumers get it automatically -->
+	<Target Name="_AddAnalyzerToPackage" BeforeTargets="_GetPackageFiles">
+		<ItemGroup>
+			<None Include="..\Analyzers\bin\$(Configuration)\netstandard2.0\Bromine.Playwright.Extensions.Analyzers.dll"
+			      Pack="true"
+			      PackagePath="analyzers/dotnet/cs"
+			      Visible="false" />
+		</ItemGroup>
+	</Target>
+
+</Project>
+
