@@ -59,6 +59,7 @@ jobs:
         if: steps.compare.outputs.UPDATE == 'true'
         run: |
           dotnet restore --source https://api.nuget.org/v3/index.json
+          dotnet build Analyzers/Bromine.Playwright.Extensions.Analyzers.csproj -c Release --no-restore
           dotnet build -c Release --no-restore
           pwsh tests/bin/Release/net8.0/playwright.ps1 install chromium --with-deps
           dotnet test tests/Bromine.Playwright.Extensions.Tests.csproj -c Release --no-build

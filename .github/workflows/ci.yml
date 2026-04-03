@@ -25,7 +25,9 @@ jobs:
         run: dotnet restore --source https://api.nuget.org/v3/index.json
 
       - name: Build
-        run: dotnet build -c Release --no-restore
+        run: |
+          dotnet build Analyzers/Bromine.Playwright.Extensions.Analyzers.csproj -c Release --no-restore
+          dotnet build -c Release --no-restore
 
       - name: Install Playwright browsers
         run: pwsh tests/bin/Release/net8.0/playwright.ps1 install chromium --with-deps
