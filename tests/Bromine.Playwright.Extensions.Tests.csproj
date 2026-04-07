@@ -17,6 +17,14 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Include="wwwroot\**" CopyToOutputDirectory="PreserveNewest" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<ProjectReference Include="..\src\Bromine.Playwright.Extensions.csproj" />
 		<ProjectReference Include="..\Analyzers\Bromine.Playwright.Extensions.Analyzers.csproj"
 		                  OutputItemType="Analyzer"

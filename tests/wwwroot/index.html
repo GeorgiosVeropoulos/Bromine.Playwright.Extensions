@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bromine Test Page</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2rem; }
+        .highlight { color: blue; font-weight: bold; }
+        .primary { background-color: #007bff; color: white; padding: 0.5rem 1rem; }
+        .hidden-element { display: none; }
+        .styled-text { color: rgb(255, 0, 0); font-size: 20px; }
+        #item-list li { padding: 0.25rem 0; }
+    </style>
+</head>
+<body>
+
+    <!-- Page heading -->
+    <h1 id="main-heading" class="highlight" data-testid="heading">Welcome to Bromine Testing</h1>
+    <p id="description" class="primary info" aria-describedby="desc-note">
+        A fluent assertion library for Playwright .NET
+    </p>
+    <span id="desc-note" hidden>Describes the purpose of the library</span>
+
+    <!-- Visible / Hidden elements -->
+    <div data-testid="visible-section">
+        <span data-testid="visible-element">I am visible</span>
+        <span data-testid="hidden-element" class="hidden-element">I am hidden</span>
+    </div>
+
+    <!-- Text and CSS assertions -->
+    <p data-testid="styled-text" class="styled-text">Red styled text</p>
+    <p data-testid="paragraph">Hello World</p>
+
+    <!-- Form elements: enabled, disabled, editable, empty -->
+    <form data-testid="test-form">
+        <div>
+            <label for="enabled-input">Enabled Input</label>
+            <input id="enabled-input" data-testid="enabled-input" type="text" value="some value"
+                   aria-label="Enabled text input" />
+        </div>
+        <div>
+            <label for="disabled-input">Disabled Input</label>
+            <input id="disabled-input" data-testid="disabled-input" type="text" value="disabled value" disabled
+                   aria-label="Disabled text input" />
+        </div>
+        <div>
+            <label for="empty-input">Empty Input</label>
+            <input id="empty-input" data-testid="empty-input" type="text" value="" placeholder="Type here..."
+                   aria-label="Empty text input" />
+        </div>
+        <div>
+            <label for="readonly-input">Readonly Input</label>
+            <input id="readonly-input" data-testid="readonly-input" type="text" value="read only" readonly />
+        </div>
+    </form>
+
+    <!-- Checkboxes -->
+    <div data-testid="checkboxes">
+        <label>
+            <input data-testid="checked-checkbox" type="checkbox" checked /> Checked
+        </label>
+        <label>
+            <input data-testid="unchecked-checkbox" type="checkbox" /> Unchecked
+        </label>
+    </div>
+
+    <!-- List for count assertions -->
+    <ul id="item-list" data-testid="item-list">
+        <li data-testid="list-item">Item 1</li>
+        <li data-testid="list-item">Item 2</li>
+        <li data-testid="list-item">Item 3</li>
+        <li data-testid="list-item">Item 4</li>
+        <li data-testid="list-item">Item 5</li>
+    </ul>
+
+    <!-- Accessibility: roles, aria attributes -->
+    <button data-testid="submit-btn" role="button" aria-label="Submit form"
+            aria-describedby="btn-desc">Submit</button>
+    <span id="btn-desc" hidden>Click to submit the form</span>
+
+    <nav data-testid="navigation" role="navigation" aria-label="Main navigation">
+        <a href="/about.html" data-testid="about-link">About</a>
+        <a href="/contact.html" data-testid="contact-link">Contact</a>
+    </nav>
+
+    <!-- Accessible error message -->
+    <div>
+        <input data-testid="error-input" type="email" aria-invalid="true"
+               aria-errormessage="email-error" value="bad-email" />
+        <span id="email-error" role="alert">Please enter a valid email address</span>
+    </div>
+
+    <!-- Multi-select for HaveValuesAsync -->
+    <select data-testid="multi-select" multiple>
+        <option value="apple" selected>Apple</option>
+        <option value="banana" selected>Banana</option>
+        <option value="cherry">Cherry</option>
+    </select>
+
+    <!-- Focus test: autofocus input -->
+    <input data-testid="autofocus-input" type="text" autofocus aria-label="Auto-focused input" />
+
+    <!-- In-viewport vs off-screen elements -->
+    <div data-testid="in-viewport" style="width: 100px; height: 100px; background: green;">In viewport</div>
+    <div data-testid="off-screen" style="position: absolute; top: -9999px; left: -9999px;">Off screen</div>
+
+    <!-- Element for click interaction tests -->
+    <div data-testid="click-section">
+        <button data-testid="click-btn" onclick="document.getElementById('click-result').textContent = 'Clicked!'">
+            Click Me
+        </button>
+        <span id="click-result" data-testid="click-result"></span>
+    </div>
+
+    <!-- Counter for multiple click tests -->
+    <div data-testid="counter-section">
+        <button data-testid="counter-btn" onclick="
+            var el = document.getElementById('counter-value');
+            el.textContent = parseInt(el.textContent) + 1;
+        ">Increment</button>
+        <span data-testid="counter-value" id="counter-value">0</span>
+    </div>
+
+    <!-- Toggle visibility -->
+    <div data-testid="toggle-section">
+        <button data-testid="toggle-btn" onclick="
+            var el = document.getElementById('toggle-target');
+            el.style.display = el.style.display === 'none' ? 'block' : 'none';
+        ">Toggle</button>
+        <div id="toggle-target" data-testid="toggle-target">Now you see me</div>
+    </div>
+
+    <!-- Input for type & clear tests -->
+    <div data-testid="type-section">
+        <input data-testid="type-input" type="text" placeholder="Type something..." />
+    </div>
+
+</body>
+</html>
+

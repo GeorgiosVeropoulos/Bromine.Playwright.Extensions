@@ -1,4 +1,5 @@
 using Bromine.Playwright.Extensions.Assertions;
+using Bromine.Playwright.Extensions.Extensions;
 using Microsoft.Playwright;
 using NUnit.Framework;
 
@@ -12,7 +13,7 @@ public class ExceptionTests : TestBase
     [Test]
     public void VerifyNotFoundLocatorThrowsCorrectMessage()
     {
-        var invalidLocator = Page.Locator("[data-qa='null']");
+        var invalidLocator = Page.Locator("[data-tes='null']");
 
         var message = Assert
             .ThrowsAsync<PlaywrightException>(async () => await invalidLocator.Should().BeVisibleAsync())?.Message;
@@ -27,5 +28,7 @@ public class ExceptionTests : TestBase
         await invalidLocator.Should().BeHiddenAsync()
             .Not.BeVisibleAsync();
 
+        await Page.NavigateAndWaitAsync("/about.html");
+        Console.WriteLine();
     }
 }

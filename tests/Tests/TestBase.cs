@@ -6,6 +6,9 @@ using NUnit.Framework;
 namespace Bromine.Playwright.Extensions.Tests;
 
 #nullable  disable
+
+[FixtureLifeCycle(LifeCycle.InstancePerTestCase)]
+[Parallelizable(ParallelScope.Children)]
 public class TestBase
 {
     
@@ -29,7 +32,7 @@ public class TestBase
         
 
         Browser = result.Browser;
-        Context = await BrowserContextBuilder.For(result.Browser).WithBaseUrl("https://example.com").BuildAsync();
+        Context = await BrowserContextBuilder.For(result.Browser).WithBaseUrl(TestServerFixture.BaseUrl).BuildAsync();
         Page = await Context.NewPageAsync();
         
         await Page.GotoAsync("/");
