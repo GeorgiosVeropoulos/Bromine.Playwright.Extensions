@@ -15,7 +15,7 @@ public class FluentPageAssertions : FluentBase<FluentPageAssertions>
     
     
     
-    /// <inheritdoc cref="IPageAssertions.ToHaveTitleAsync(string titleOrRegExp, PageAssertionsToHaveTitleOptions? options = null)"/>
+    /// <inheritdoc cref="IPageAssertions.ToHaveTitleAsync(string, PageAssertionsToHaveTitleOptions)"/>
     public FluentPageAssertions HaveTitleAsync(string titleOrRegExp, PageAssertionsToHaveTitleOptions? options = null, string because = "", params object[] becauseArgs)
     {
         var negate = NegateNext;
@@ -26,7 +26,7 @@ public class FluentPageAssertions : FluentBase<FluentPageAssertions>
         return this;
     }
     
-    /// <inheritdoc cref="IPageAssertions.ToHaveURLAsync(string urlOrRegExp, PageAssertionsToHaveURLOptions? options = null)"/>
+    /// <inheritdoc cref="IPageAssertions.ToHaveURLAsync(string, PageAssertionsToHaveURLOptions)"/>
     public FluentPageAssertions HaveURLAsync(string expectedUrl, PageAssertionsToHaveURLOptions? options = null, string because = "", params object[] becauseArgs)
     {
         var negate = NegateNext;
