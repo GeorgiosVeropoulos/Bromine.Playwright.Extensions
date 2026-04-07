@@ -9,10 +9,11 @@ namespace Bromine.Playwright.Extensions.Analyzers;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class FluentAssertionAwaitAnalyzer : DiagnosticAnalyzer
 {
-    public const string DiagnosticId = "BROE101";
+    public const string UnawaitedDiagnosticId = "BROE001";
+    public const string AssignmentDiagnosticId = "BROW201";
 
-    private static readonly DiagnosticDescriptor Rule = new(
-        id: DiagnosticId,
+    private static readonly DiagnosticDescriptor UnawaitedRule = new(
+        id: UnawaitedDiagnosticId,
         title: "Fluent assertion chain is not awaited",
         messageFormat: "This fluent assertion chain is not awaited and will never execute. Add 'await' before the expression.",
         category: "Usage",
@@ -22,14 +23,33 @@ public sealed class FluentAssertionAwaitAnalyzer : DiagnosticAnalyzer
             "Fluent assertion chains built with .Should() must be awaited to execute. " +
             "Without 'await', the assertions are silently skipped.");
 
+    private static readonly DiagnosticDescriptor AssignmentRule = new(
+        id: AssignmentDiagnosticId,
+        title: "Fluent assertion builder assigned to a variable",
+        messageFormat: "Do not assign fluent assertion chains to variables. Build and await the chain directly on a single line to prevent execution bugs.",
+        category: "Usage",
+        defaultSeverity: DiagnosticSeverity.Warning, // Set as a Warning per your request
+        isEnabledByDefault: true,
+        description:
+            "Assigning a fluent assertion builder to a variable can lead to caching bugs if awaited multiple times. " +
+            "Always chain and await the assertion inline.");
+
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
-        ImmutableArray.Create(Rule);
+        ImmutableArray.Create(UnawaitedRule, AssignmentRule);
 
     public override void Initialize(AnalysisContext context)
     {
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
         context.EnableConcurrentExecution();
+        
+        // Check for missing awaits
         context.RegisterSyntaxNodeAction(AnalyzeExpressionStatement, SyntaxKind.ExpressionStatement);
+        
+        // Check for variable assignments (var assertions = locator.Should();)
+        context.RegisterSyntaxNodeAction(AnalyzeLocalDeclaration, SyntaxKind.LocalDeclarationStatement);
+        
+        // Check for existing variable assignments (assertions = locator.Should();)
+        context.RegisterSyntaxNodeAction(AnalyzeAssignment, SyntaxKind.SimpleAssignmentExpression);
     }
 
     private static void AnalyzeExpressionStatement(SyntaxNodeAnalysisContext context)
@@ -48,15 +68,37 @@ public sealed class FluentAssertionAwaitAnalyzer : DiagnosticAnalyzer
 
         // Check if the return type derives from FluentBase<T>
         var typeInfo = context.SemanticModel.GetTypeInfo(invocation, context.CancellationToken);
-        var returnType = typeInfo.Type;
-
-        if (returnType == null)
-            return;
-
-        if (IsFluentBaseType(returnType))
+        if (IsFluentBaseType(typeInfo.Type))
         {
-            context.ReportDiagnostic(
-                Diagnostic.Create(Rule, expressionStatement.GetLocation()));
+            context.ReportDiagnostic(Diagnostic.Create(UnawaitedRule, expressionStatement.GetLocation()));
+        }
+    }
+
+    private static void AnalyzeLocalDeclaration(SyntaxNodeAnalysisContext context)
+    {
+        var declaration = (LocalDeclarationStatementSyntax)context.Node;
+
+        foreach (var variable in declaration.Declaration.Variables)
+        {
+            if (variable.Initializer?.Value is { } initializerValue)
+            {
+                var typeInfo = context.SemanticModel.GetTypeInfo(initializerValue, context.CancellationToken);
+                if (IsFluentBaseType(typeInfo.Type))
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(AssignmentRule, variable.GetLocation()));
+                }
+            }
+        }
+    }
+
+    private static void AnalyzeAssignment(SyntaxNodeAnalysisContext context)
+    {
+        var assignment = (AssignmentExpressionSyntax)context.Node;
+        
+        var typeInfo = context.SemanticModel.GetTypeInfo(assignment.Right, context.CancellationToken);
+        if (IsFluentBaseType(typeInfo.Type))
+        {
+            context.ReportDiagnostic(Diagnostic.Create(AssignmentRule, assignment.GetLocation()));
         }
     }
 
@@ -64,7 +106,6 @@ public sealed class FluentAssertionAwaitAnalyzer : DiagnosticAnalyzer
     {
         while (type != null)
         {
-            // Check by name + namespace to avoid needing a direct assembly reference
             if (type is INamedTypeSymbol named &&
                 named.IsGenericType &&
                 named.Name == "FluentBase" &&
@@ -95,4 +136,3 @@ public sealed class FluentAssertionAwaitAnalyzer : DiagnosticAnalyzer
         return string.Join(".", parts);
     }
 }
-
