@@ -15,12 +15,14 @@ public class FluentAPIResponseAssertions : FluentBase<FluentAPIResponseAssertion
         NegateNext = negateNext;
     }
     
+    /// <inheritdoc cref="IAPIResponseAssertions.ToBeOKAsync"/>
     public FluentAPIResponseAssertions BeOKAsync(string because = "", params object[] becauseArgs)
     {
-        var task = NegateNext
+        var negate = NegateNext;
+        AddStep(() => negate
             ? Expect(_response).Not.ToBeOKAsync()
-            : Expect(_response).ToBeOKAsync();
-        AddStep(() => task, new Because(because, becauseArgs));
+            : Expect(_response).ToBeOKAsync(), 
+            new Because(because, becauseArgs));
         return this;
     }
     

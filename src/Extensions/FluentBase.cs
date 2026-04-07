@@ -10,9 +10,10 @@ namespace Bromine.Playwright.Extensions.Extensions;
 ///  Methods can be chained and will be executed in sequence when the final assertion is awaited.
 /// If any assertion fails, the provided "because" message will be included in the exception for better context.
 /// </summary>
-public class FluentBase<TSelf> : INotifyCompletion where TSelf : FluentBase<TSelf>
+public class FluentBase<TSelf> : ICriticalNotifyCompletion where TSelf : FluentBase<TSelf>
 {
     private readonly List<(Func<Task> Step, Because because)> _steps = new();
+    private Task? _runTask;
     protected bool NegateNext = false;
 
     protected void AddStep(Func<Task> step, Because because)
@@ -30,18 +31,18 @@ public class FluentBase<TSelf> : INotifyCompletion where TSelf : FluentBase<TSel
         }
     }
 
-    
+    private Task Run() => _runTask ??= RunCore();
     /// <summary>
     /// Runs the chained tasks sequentially, catching any PlaywrightExceptions and rethrowing them with the appropriate "because" message if provided.
     /// </summary>
     /// <exception cref="PlaywrightException"></exception>
-    private async Task Run()
+    private async Task RunCore()
     {
         foreach (var (step, because) in _steps)
         {
             try
             {
-                await step();
+                await step().ConfigureAwait(false);
             }
             catch (PlaywrightException e)
             {
@@ -61,8 +62,10 @@ public class FluentBase<TSelf> : INotifyCompletion where TSelf : FluentBase<TSel
     protected IAPIResponseAssertions Expect(IAPIResponse response) => Microsoft.Playwright.Assertions.Expect(response);
     
     
-    public TaskAwaiter GetAwaiter() => Run().GetAwaiter();
+    public FluentBase<TSelf> GetAwaiter() => this;
     public bool IsCompleted => Run().IsCompleted;
     public void OnCompleted(Action continuation) => Run().GetAwaiter().OnCompleted(continuation);
-    public void GetResult() => GetAwaiter().GetResult();
+    public void UnsafeOnCompleted(Action continuation) => Run().GetAwaiter().UnsafeOnCompleted(continuation);
+
+    public void GetResult() => Run().GetAwaiter().GetResult();
 }

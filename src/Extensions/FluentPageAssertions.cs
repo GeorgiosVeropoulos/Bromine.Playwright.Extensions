@@ -15,21 +15,25 @@ public class FluentPageAssertions : FluentBase<FluentPageAssertions>
     
     
     
-    public FluentPageAssertions HaveTitleAsync(string expectedTitle, string because = "", params object[] becauseArgs)
+    /// <inheritdoc cref="IPageAssertions.ToHaveTitleAsync(string titleOrRegExp, PageAssertionsToHaveTitleOptions? options = null)"/>
+    public FluentPageAssertions HaveTitleAsync(string titleOrRegExp, PageAssertionsToHaveTitleOptions? options = null, string because = "", params object[] becauseArgs)
     {
-        var task = NegateNext
-            ? Expect(_page).Not.ToHaveTitleAsync(expectedTitle)
-            : Expect(_page).ToHaveTitleAsync(expectedTitle);
-        AddStep(() => task, new Because(because, becauseArgs));
+        var negate = NegateNext;
+        AddStep(() => negate
+            ? Expect(_page).Not.ToHaveTitleAsync(titleOrRegExp,options)
+            : Expect(_page).ToHaveTitleAsync(titleOrRegExp),
+            new Because(because, becauseArgs));
         return this;
     }
     
-    public FluentPageAssertions HaveURLAsync(string expectedUrl, string because = "", params object[] becauseArgs)
+    /// <inheritdoc cref="IPageAssertions.ToHaveURLAsync(string urlOrRegExp, PageAssertionsToHaveURLOptions? options = null)"/>
+    public FluentPageAssertions HaveURLAsync(string expectedUrl, PageAssertionsToHaveURLOptions? options = null, string because = "", params object[] becauseArgs)
     {
-        var task = NegateNext
+        var negate = NegateNext;
+        AddStep(() => negate
             ? Expect(_page).Not.ToHaveURLAsync(expectedUrl)
-            : Expect(_page).ToHaveURLAsync(expectedUrl);
-        AddStep(() => task, new Because(because, becauseArgs));
+            : Expect(_page).ToHaveURLAsync(expectedUrl),
+            new Because(because, becauseArgs));
         return this;
     }
 }

@@ -23,7 +23,7 @@ public class TestBase
         
         // Run headed locally, headless in CI
         if (Environment.GetEnvironmentVariable("CI") == null)
-            builder.Headless();
+            builder.Headed();
         
         var result = await builder.BuildAsync();
         
@@ -34,6 +34,15 @@ public class TestBase
         
         await Page.GotoAsync("/");
     }
-        
-        
+
+    [TearDown]
+    public async Task TearDown()
+    {
+        if (Page != null)
+            await Page.CloseAsync();
+        if (Context != null)
+            await Context.CloseAsync();
+        if (Browser != null)
+            await Browser.CloseAsync();
+    }
 }
