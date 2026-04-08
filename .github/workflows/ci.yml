@@ -33,9 +33,22 @@ jobs:
         run: pwsh tests/bin/Release/net8.0/playwright.ps1 install chromium --with-deps
 
       - name: Run tests
-        run: dotnet test tests/Bromine.Playwright.Extensions.Tests.csproj -c Release --no-build --logger "trx;LogFileName=results.trx"
+        run: >
+          dotnet test tests/Bromine.Playwright.Extensions.Tests.csproj
+          -c Release --no-build
+          --logger "trx;LogFileName=results.trx"
+          --collect:"XPlat Code Coverage"
+          --results-directory tests/TestResults
         env:
           CI: true
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        if: always()
+        with:
+          files: tests/TestResults/**/coverage.cobertura.xml
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload test results
         uses: actions/upload-artifact@v5

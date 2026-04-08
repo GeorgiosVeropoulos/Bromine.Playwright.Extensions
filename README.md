@@ -1,5 +1,12 @@
 # Bromine.Playwright.Extensions
 
+[![NuGet](https://img.shields.io/nuget/v/Bromine.Playwright.Extensions?logo=nuget&label=NuGet)](https://www.nuget.org/packages/Bromine.Playwright.Extensions)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/Bromine.Playwright.Extensions?logo=nuget&label=Downloads)](https://www.nuget.org/packages/Bromine.Playwright.Extensions)
+[![CI](https://github.com/GeorgiosVeropoulos/Bromine.Playwright.Extensions/actions/workflows/ci.yml/badge.svg)](https://github.com/GeorgiosVeropoulos/Bromine.Playwright.Extensions/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/GeorgiosVeropoulos/Bromine.Playwright.Extensions/graph/badge.svg)](https://codecov.io/gh/GeorgiosVeropoulos/Bromine.Playwright.Extensions)
+[![GitHub Release](https://img.shields.io/github/v/release/GeorgiosVeropoulos/Bromine.Playwright.Extensions?logo=github&label=Release)](https://github.com/GeorgiosVeropoulos/Bromine.Playwright.Extensions/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A Playwright extensions library for .NET providing **fluent assertions** (`.Should()`), **browser/context builder patterns**, and **enhanced Page/Locator extension methods** for E2E test automation.
 
 ## Installation
