@@ -180,48 +180,7 @@ await page.ScrollToTopAsync();
 string filePath = await page.ClickAndDownloadAsync("#export-btn", "./downloads");
 ```
 
-### 5. Locator Extensions
-
-Enhanced `ILocator` extension methods with built-in waits and retries.
-
-```csharp
-using Bromine.Playwright.Extensions.Extensions;
-
-// Click helpers
-await page.Locator("#btn").ClickWhenReadyAsync();           // waits for visible + enabled
-await page.Locator("#btn").ClickWithRetryAsync();            // auto-retry on failure (3x)
-await page.Locator("#btn").HoverAndClickAsync();             // hover first
-await page.Locator("#btn").DoubleClickWhenReadyAsync();
-await page.Locator("#btn").ClickAndWaitUntilHiddenAsync();   // click + wait for element to disappear
-await page.Locator(".items li").ClickNthWhenReadyAsync(2);   // click 3rd item
-
-// Fill helpers
-await page.Locator("#email").FillWhenReadyAsync("test@test.com");
-await page.Locator("#email").FillAndVerifyAsync("test@test.com");  // fill + assert value
-await page.Locator("#search").TypeSlowlyAsync("playwright", delayMs: 50);
-
-// Scroll & visibility
-await page.Locator("#footer").ScrollIntoViewAsync();
-bool isVisible = await page.Locator(".popup").IsVisibleWithinAsync(timeoutMs: 3000);
-await page.Locator(".loader").WaitUntilHiddenAsync();
-await page.Locator("#content").WaitUntilAttachedAsync();
-
-// Dropdown selection
-await page.Locator("select#country").SelectByTextAsync("Greece");
-await page.Locator("select#country").SelectByValueAsync("GR");
-
-// Get data
-string text = await page.Locator(".title").GetTextWhenReadyAsync();
-string? href = await page.Locator("a.link").GetAttributeWhenReadyAsync("href");
-
-// Drag & drop
-await page.Locator("#source").DragToAsync(page.Locator("#target"));
-
-// Random selection from list
-string? selectedText = await page.Locator(".dropdown-item").ClickRandomOptionAsync();
-```
-
-### 6. Global Configuration
+### 5. Global Configuration
 
 Set default timeouts once at test startup.
 
