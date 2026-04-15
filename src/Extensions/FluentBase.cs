@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Bromine.Playwright.Extensions.Reason;
 using Microsoft.Playwright;
@@ -31,11 +32,14 @@ public class FluentBase<TSelf> : ICriticalNotifyCompletion where TSelf : FluentB
         }
     }
 
+    [StackTraceHidden]
     private Task Run() => _runTask ??= RunCore();
+    
     /// <summary>
     /// Runs the chained tasks sequentially, catching any PlaywrightExceptions and rethrowing them with the appropriate "because" message if provided.
     /// </summary>
     /// <exception cref="PlaywrightException"></exception>
+    [StackTraceHidden]
     private async Task RunCore()
     {
         foreach (var (step, because) in _steps)
@@ -52,7 +56,7 @@ public class FluentBase<TSelf> : ICriticalNotifyCompletion where TSelf : FluentB
                 var formattedBecause = because.Args.Length > 0 
                     ? string.Format(because.Message, because.Args) 
                     : because.Message;
-                throw new PlaywrightException($"{formattedBecause}\n{e.Message}", e);
+                throw new PlaywrightException($"{formattedBecause}\n{e.Message}");
             }
         }
     }
@@ -67,5 +71,6 @@ public class FluentBase<TSelf> : ICriticalNotifyCompletion where TSelf : FluentB
     public void OnCompleted(Action continuation) => Run().GetAwaiter().OnCompleted(continuation);
     public void UnsafeOnCompleted(Action continuation) => Run().GetAwaiter().UnsafeOnCompleted(continuation);
 
+    [StackTraceHidden]
     public void GetResult() => Run().GetAwaiter().GetResult();
 }

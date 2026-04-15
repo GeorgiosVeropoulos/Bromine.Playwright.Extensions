@@ -506,7 +506,7 @@ public class LocatorShouldTests : TestBase
                 .BeVisibleAsync()       // fails — should stop here
                 .BeEnabledAsync());     // should never run
 
-        Assert.That(ex!.Message, Does.Contain("visible"));
+        Assert.That(ex!.Message, Does.Contain("Locator expected to be visible"));
     }
 
     [Test]
@@ -517,7 +517,7 @@ public class LocatorShouldTests : TestBase
         var ex = Assert.ThrowsAsync<PlaywrightException>(
             async () => await locator.Should().BeVisibleAsync());
 
-        Assert.That(ex!.Message, Does.Contain("expected"));
+        Assert.That(ex!.Message, Does.Contain("Locator expected to be visible"));
     }
 }
 

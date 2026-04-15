@@ -15,7 +15,10 @@ public class FluentAPIResponseAssertions : FluentBase<FluentAPIResponseAssertion
         NegateNext = negateNext;
     }
     
-    /// <inheritdoc cref="IAPIResponseAssertions.ToBeOKAsync"/>
+    /// <summary>
+    /// Asserts that the API response has an OK status (2xx).
+    /// See <see cref="IAPIResponseAssertions.ToBeOKAsync"/>.
+    /// </summary>
     public FluentAPIResponseAssertions BeOKAsync(string because = "", params object[] becauseArgs)
     {
         var negate = NegateNext;
