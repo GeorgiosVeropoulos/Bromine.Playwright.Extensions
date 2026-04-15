@@ -45,6 +45,12 @@ public class TestServerFixture
             return Results.Ok(new { header = "present" });
         });
 
+        _app.MapGet("/api/download", () =>
+        {
+            var content = "This is a test download file."u8.ToArray();
+            return Results.File(content, "text/plain", "test-download.txt");
+        });
+
         _app.UseStaticFiles(new StaticFileOptions
         {
             FileProvider = new PhysicalFileProvider(wwwroot)

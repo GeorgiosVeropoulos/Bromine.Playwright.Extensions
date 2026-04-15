@@ -1,4 +1,3 @@
-using Bromine.Playwright.Extensions.Assertions;
 using Bromine.Playwright.Extensions.Configuration;
 using Bromine.Playwright.Extensions.Extensions;
 using Microsoft.Playwright;
@@ -412,6 +411,93 @@ public class PageExtensionsTests : TestBase
         var result = await Page.TryClickAsync("[data-testid='nonexistent']");
 
         Assert.That(result, Is.False);
+    }
+
+    // ───────────────────────── ClickAndDownloadAsync ─────────────────────────
+
+    [Test]
+    public async Task ClickAndDownloadAsync_ShouldDownloadFileAndReturnPath()
+    {
+        var saveDir = Path.Combine(Path.GetTempPath(), $"pw-download-{Guid.NewGuid()}");
+
+        try
+        {
+            var savedPath = await Page.ClickAndDownloadAsync(
+                "[data-testid='download-link']",
+                saveDir);
+
+            Assert.That(File.Exists(savedPath), Is.True);
+            Assert.That(new FileInfo(savedPath).Length, Is.GreaterThan(0));
+        }
+        finally
+        {
+            if (Directory.Exists(saveDir))
+                Directory.Delete(saveDir, recursive: true);
+        }
+    }
+
+    [Test]
+    public async Task ClickAndDownloadAsync_ShouldCreateSaveDirectory()
+    {
+        var saveDir = Path.Combine(Path.GetTempPath(), $"pw-download-{Guid.NewGuid()}");
+
+        try
+        {
+            Assert.That(Directory.Exists(saveDir), Is.False);
+
+            await Page.ClickAndDownloadAsync("[data-testid='download-link']", saveDir);
+
+            Assert.That(Directory.Exists(saveDir), Is.True);
+        }
+        finally
+        {
+            if (Directory.Exists(saveDir))
+                Directory.Delete(saveDir, recursive: true);
+        }
+    }
+
+    [Test]
+    public async Task ClickAndDownloadAsync_SavedFile_ShouldContainExpectedContent()
+    {
+        var saveDir = Path.Combine(Path.GetTempPath(), $"pw-download-{Guid.NewGuid()}");
+
+        try
+        {
+            var savedPath = await Page.ClickAndDownloadAsync(
+                "[data-testid='download-link']",
+                saveDir);
+
+            var content = await File.ReadAllTextAsync(savedPath);
+            Assert.That(content, Is.EqualTo("This is a test download file."));
+        }
+        finally
+        {
+            if (Directory.Exists(saveDir))
+                Directory.Delete(saveDir, recursive: true);
+        }
+    }
+
+    [Test]
+    public async Task ClickAndDownloadAsync_FileName_ShouldContainTimestamp()
+    {
+        var saveDir = Path.Combine(Path.GetTempPath(), $"pw-download-{Guid.NewGuid()}");
+
+        try
+        {
+            var savedPath = await Page.ClickAndDownloadAsync(
+                "[data-testid='download-link']",
+                saveDir);
+
+            var fileName = Path.GetFileNameWithoutExtension(savedPath);
+            // Format: test-download_yyyyMMdd_HHmmss
+            Assert.That(fileName, Does.StartWith("test-download_"));
+            Assert.That(Path.GetExtension(savedPath), Is.EqualTo(".txt"));
+        }
+        finally
+        {
+            if (Directory.Exists(saveDir))
+                Directory.Delete(saveDir, recursive: true);
+        }
     }
 }
 
