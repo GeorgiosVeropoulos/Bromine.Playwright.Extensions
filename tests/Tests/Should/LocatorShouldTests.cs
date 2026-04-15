@@ -3,7 +3,7 @@ using Bromine.Playwright.Extensions.Assertions;
 using Microsoft.Playwright;
 using NUnit.Framework;
 
-namespace Bromine.Playwright.Extensions.Tests;
+namespace Bromine.Playwright.Extensions.Tests.Should;
 
 [TestFixture]
 public class LocatorShouldTests : TestBase
