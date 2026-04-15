@@ -14,7 +14,7 @@ public static class AssertionExtensions
     /// <example>
     /// <code>
     /// await page.Locator("#submit").Should().BeVisibleAsync();
-    /// await page.Locator("#submit").Should().BeInteractableAsync();
+    /// await page.Locator("#submit").Should().BeEnabledAsync();
     /// await page.Locator(".error").Should().HaveTextAsync("Invalid input");
     /// await page.Locator(".items").Should().HaveCountAsync(5);
     /// </code>
@@ -27,7 +27,7 @@ public static class AssertionExtensions
     /// <example>
     /// <code>
     /// await page.Should().HaveTitleAsync("Dashboard");
-    /// await page.Should().HaveUrlContainingAsync("/dashboard");
+    /// await page.Should().HaveURLAsync("https://example.com/dashboard");
     /// </code>
     /// </example>
     /// </summary>
@@ -39,14 +39,15 @@ public static class AssertionExtensions
     /// <example>
     /// <code>
     /// var response = await request.GetAsync("/api/users");
-    /// await response.Should().BeOkAsync();
-    /// response.Should().HaveStatus(200);
+    /// await response.Should().BeOKAsync();
+    /// await response.Should().HaveStatusAsync(200);
+    /// await response.Should()
+    ///     .BeOKAsync()
+    ///     .HaveHeaderValueAsync("Content-Type", "application/json")
+    ///     .BodyContainsAsync("Alice");
     /// </code>
     /// </example>
     /// </summary>
-    // public static ResponseAssertionBuilder Should(this IAPIResponse response)
-    // => new(response);
-
-    public static ResponseAssertionBuilder Should(this IAPIResponse response) => new(response);
+    public static FluentAPIResponseAssertions Should(this IAPIResponse response) => new(response);
 }
 

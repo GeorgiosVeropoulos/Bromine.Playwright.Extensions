@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.FileProviders;
 using NUnit.Framework;
 
@@ -25,6 +26,24 @@ public class TestServerFixture
         builder.WebHost.UseUrls("http://127.0.0.1:0"); 
 
         _app = builder.Build();
+
+        // ── API endpoints for ResponseAssertionBuilder tests ──
+        _app.MapGet("/api/ok", () => Results.Ok(new { success = true, message = "all good" }));
+
+        _app.MapGet("/api/not-found", () => Results.NotFound(new { error = "resource not found" }));
+
+        _app.MapGet("/api/users", () => Results.Json(
+            new[] { new { id = 1, name = "Alice" }, new { id = 2, name = "Bob" } },
+            statusCode: 200,
+            contentType: "application/json"));
+
+        _app.MapGet("/api/error", () => Results.StatusCode(500));
+
+        _app.MapGet("/api/custom-header", (HttpContext ctx) =>
+        {
+            ctx.Response.Headers["X-Custom-Header"] = "custom-value";
+            return Results.Ok(new { header = "present" });
+        });
 
         _app.UseStaticFiles(new StaticFileOptions
         {

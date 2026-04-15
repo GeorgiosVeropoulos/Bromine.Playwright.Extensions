@@ -33,34 +33,44 @@ Chain-able, readable assertions for `ILocator`, `IPage`, and `IAPIResponse`.
 using Bromine.Playwright.Extensions.Assertions;
 
 // Locator assertions
-await page.Locator("#submit-btn").Should().BeVisibleAsync();
-await page.Locator("#submit-btn").Should().BeInteractableAsync();   // visible + enabled
-await page.Locator(".error").Should().HaveTextAsync("Invalid input");
-await page.Locator(".error").Should().ContainTextAsync("Invalid");
-await page.Locator("input[name='email']").Should().HaveValueAsync("test@test.com");
-await page.Locator(".items").Should().HaveCountAsync(5);
-await page.Locator("#checkbox").Should().BeCheckedAsync();
-await page.Locator("#field").Should().HaveAttributeAsync("disabled", "true");
-await page.Locator(".alert").Should().BeVisibleWithTextAsync("Success");
+await page.Locator("#submit-btn").Should()
+    .BeVisibleAsync()
+    .HaveCountAsync(1)
+    .HaveTextAsync("Submit");
 
 // Negated assertions
 await page.Locator(".spinner").Should().Not.BeVisibleAsync();
 await page.Locator("#old-element").Should().Not.HaveTextAsync("deprecated");
 
+// Chaining multiple assertions
+await page.Locator("#submit-btn").Should()
+    .BeVisibleAsync()
+    .Not.BeEnabledAsync();
+
+// "because" messages for better failure diagnostics
+await page.Locator("#submit-btn").Should()
+    .BeVisibleAsync(because: "the form should be loaded")
+    .BeEnabledAsync(because: "the user has filled all required fields");
+
 // Page assertions
 await page.Should().HaveTitleAsync("Dashboard");
-await page.Should().HaveUrlContainingAsync("/dashboard");
-await page.Should().HaveUrlMatchingAsync(@"\/users\/\d+");
+await page.Should().HaveURLAsync("https://example.com/dashboard");
 
-// Response assertions
+// Response assertions — fully chainable, same pattern as locator assertions
 var response = await request.GetAsync("/api/users");
-await response.Should().BeOkAsync();
-response.Should().HaveStatus(200);
-response.Should().HaveHeader("Content-Type", "application/json");
-await response.Should().BodyContainsAsync("\"success\":true");
+await response.Should()
+    .BeOKAsync()
+    .HaveStatusAsync(200)
+    .HaveHeaderValueAsync("Content-Type", "application/json")
+    .BodyContainsAsync("Alice");
 
-// Custom timeout per assertion chain
-await page.Locator("#slow-loader").Should().WithTimeout(30_000).BeVisibleAsync();
+// Negated
+await response.Should().Not.BeOKAsync();
+
+// With because messages
+await response.Should()
+    .BeOKAsync(because: "the users endpoint should be healthy")
+    .BodyContainsAsync("Alice", because: "Alice should be in the user list");
 ```
 
 ### 2. Browser Builder Pattern
@@ -188,11 +198,11 @@ Set default timeouts once at test startup.
 using Bromine.Playwright.Extensions.Configuration;
 
 // In your [BeforeTestRun] or setup
-PlaywrightDefaults.AssertionTimeout = 10_000;    // 10s for assertions
-PlaywrightDefaults.NavigationTimeout = 60_000;   // 60s for navigation
-PlaywrightDefaults.ActionTimeout = 15_000;       // 15s for actions
-PlaywrightDefaults.DefaultRetryCount = 5;        // 5 retry attempts
-PlaywrightDefaults.RetryDelayMs = 1_000;         // 1s between retries
+PlaywrightDefaults.AssertionTimeout = 10_000;    // 10s for assertions  (default: 5s)
+PlaywrightDefaults.NavigationTimeout = 60_000;   // 60s for navigation (default: 30s)
+PlaywrightDefaults.ActionTimeout = 15_000;       // 15s for actions    (default: 15s)
+PlaywrightDefaults.DefaultRetryCount = 3;        // 3 retry attempts   (default: 3)
+PlaywrightDefaults.RetryDelayMs = 500;           // 500ms between retries (default: 500ms)
 
 // Reset to defaults
 PlaywrightDefaults.Reset();
