@@ -61,8 +61,10 @@ public class PlaywrightBrowserBuilderTests
 
         Assert.That(_result.Browser.BrowserType.Name, Is.EqualTo("chromium"));
     }
-
+    
     [Test]
+    [Category("RequiresFirefox")]
+    [Explicit("Requires Firefox to be installed via 'npx playwright install firefox'")]
     public async Task WithFirefox_ShouldLaunchFirefoxBrowser()
     {
         _result = await PlaywrightBrowserBuilder.Create()
@@ -72,8 +74,10 @@ public class PlaywrightBrowserBuilderTests
 
         Assert.That(_result.Browser.BrowserType.Name, Is.EqualTo("firefox"));
     }
-
+    
     [Test]
+    [Category("RequiresWebkit")]
+    [Explicit("Requires WebKit to be installed via 'npx playwright install webkit'")]
     public async Task WithWebkit_ShouldLaunchWebkitBrowser()
     {
         _result = await PlaywrightBrowserBuilder.Create()
@@ -98,6 +102,8 @@ public class PlaywrightBrowserBuilderTests
     }
 
     [Test]
+    [Category("RequiresDisplay")]
+    [Explicit("Requires a display server (X11/Wayland) — cannot run in headless CI")]
     public async Task Headless_False_ShouldBeSameAsHeaded()
     {
         _result = await PlaywrightBrowserBuilder.Create()
@@ -138,6 +144,21 @@ public class PlaywrightBrowserBuilderTests
     // ───────────────────────── Last browser type wins ─────────────────────────
 
     [Test]
+    public async Task LastBrowserTypeWins_ShouldUseChromium()
+    {
+        _result = await PlaywrightBrowserBuilder.Create()
+            .WithWebkit()
+            .WithFirefox()
+            .WithChromium()
+            .Headless()
+            .BuildAsync();
+
+        Assert.That(_result.Browser.BrowserType.Name, Is.EqualTo("chromium"));
+    }
+    
+    [Test]
+    [Category("RequiresFirefox")]
+    [Explicit("Requires Firefox to be installed via 'npx playwright install firefox'")]
     public async Task LastBrowserTypeWins_ShouldUseFirefox()
     {
         _result = await PlaywrightBrowserBuilder.Create()
@@ -148,6 +169,21 @@ public class PlaywrightBrowserBuilderTests
             .BuildAsync();
 
         Assert.That(_result.Browser.BrowserType.Name, Is.EqualTo("firefox"));
+    }
+    
+    [Test]
+    [Category("RequiresWebkit")]
+    [Explicit("Requires WebKit to be installed via 'npx playwright install webkit'")]
+    public async Task LastBrowserTypeWins_ShouldUseWebkit()
+    {
+        _result = await PlaywrightBrowserBuilder.Create()
+            .WithChromium()
+            .WithFirefox()
+            .WithWebkit()
+            .Headless()
+            .BuildAsync();
+
+        Assert.That(_result.Browser.BrowserType.Name, Is.EqualTo("webkit"));
     }
 
     // ───────────────────────── WithSlowMotion ─────────────────────────
