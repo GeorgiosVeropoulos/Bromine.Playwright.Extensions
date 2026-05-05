@@ -37,13 +37,13 @@ public class LocatorShouldTests : TestBase
     [Test]
     public async Task ToBeAttachedAsync_ShouldPass_WhenElementExists()
     {
-        await Page.Locator("[data-testid='heading']").Should().ToBeAttachedAsync();
+        await Page.Locator("[data-testid='heading']").Should().BeAttachedAsync();
     }
 
     [Test]
     public async Task ToBeAttachedAsync_Not_ShouldPass_WhenElementDoesNotExist()
     {
-        await Page.Locator("[data-testid='nonexistent']").Should().Not.ToBeAttachedAsync();
+        await Page.Locator("[data-testid='nonexistent']").Should().Not.BeAttachedAsync();
     }
 
     [Test]
@@ -115,13 +115,13 @@ public class LocatorShouldTests : TestBase
     [Test]
     public async Task ToBeCheckedAsync_ShouldPass_WhenCheckboxIsChecked()
     {
-        await Page.Locator("[data-testid='checked-checkbox']").Should().ToBeCheckedAsync();
+        await Page.Locator("[data-testid='checked-checkbox']").Should().BeCheckedAsync();
     }
 
     [Test]
     public async Task ToBeCheckedAsync_Not_ShouldPass_WhenCheckboxIsUnchecked()
     {
-        await Page.Locator("[data-testid='unchecked-checkbox']").Should().Not.ToBeCheckedAsync();
+        await Page.Locator("[data-testid='unchecked-checkbox']").Should().Not.BeCheckedAsync();
     }
 
     // ───────────────────────── Focused ─────────────────────────

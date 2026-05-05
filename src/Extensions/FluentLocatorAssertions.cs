@@ -19,7 +19,7 @@ public class FluentLocatorAssertions : FluentBase<FluentLocatorAssertions>
     /// Asserts that the locator points to an attached DOM node.
     /// See <see cref="ILocatorAssertions.ToBeAttachedAsync"/>.
     /// </summary>
-    public FluentLocatorAssertions ToBeAttachedAsync(LocatorAssertionsToBeAttachedOptions? options = null,
+    public FluentLocatorAssertions BeAttachedAsync(LocatorAssertionsToBeAttachedOptions? options = null,
         string because = "", params object[] becauseArgs)
     {
         var negate = NegateNext;
@@ -34,7 +34,7 @@ public class FluentLocatorAssertions : FluentBase<FluentLocatorAssertions>
     /// Asserts that the checkbox locator is checked.
     /// See <see cref="ILocatorAssertions.ToBeCheckedAsync"/>.
     /// </summary>
-    public FluentLocatorAssertions ToBeCheckedAsync(LocatorAssertionsToBeCheckedOptions? options = null, string because = "", params object[] becauseArgs)
+    public FluentLocatorAssertions BeCheckedAsync(LocatorAssertionsToBeCheckedOptions? options = null, string because = "", params object[] becauseArgs)
     {
         var negate = NegateNext;
         AddStep(() => negate
@@ -167,6 +167,64 @@ public class FluentLocatorAssertions : FluentBase<FluentLocatorAssertions>
         AddStep(() => negate
                 ? Expect(_locator).Not.ToContainClassAsync(expected, options)
                 : Expect(_locator).ToContainClassAsync(expected, options),
+            new Because(because, becauseArgs));
+        return this;
+    }
+    
+    /// <summary>
+    /// Ensures the ILocator points to an element that contains the given text
+    /// See <see cref="ILocatorAssertions.ToContainTextAsync(string, LocatorAssertionsToContainTextOptions?)"/>.
+    /// </summary>
+    public FluentLocatorAssertions ContainTextAsync(string expected, LocatorAssertionsToContainTextOptions? options = null, string because = "", params object[] becauseArgs)
+    {
+        var negate = NegateNext;
+        AddStep(() => negate
+                ? Expect(_locator).Not.ToContainTextAsync(expected, options)
+                : Expect(_locator).ToContainTextAsync(expected, options),
+            new Because(because, becauseArgs));
+        return this;
+    }
+    
+    /// <summary>
+    /// Ensures the ILocator points to an element that contains the given text
+    /// See <see cref="ILocatorAssertions.ToContainTextAsync(Regex, LocatorAssertionsToContainTextOptions?)"/>.
+    /// </summary>
+    public FluentLocatorAssertions ContainTextAsync(Regex expected, LocatorAssertionsToContainTextOptions? options = null, string because = "", params object[] becauseArgs)
+    {
+        var negate = NegateNext;
+        AddStep(() => negate
+                ? Expect(_locator).Not.ToContainTextAsync(expected, options)
+                : Expect(_locator).ToContainTextAsync(expected, options),
+            new Because(because, becauseArgs));
+        return this;
+    }
+    
+    /// <summary>
+    /// Ensures the ILocator points to an element that contains the given text
+    /// See <see cref="ILocatorAssertions.ToContainTextAsync(IEnumerable{string}, LocatorAssertionsToContainTextOptions?)"/>.
+    /// </summary>
+    public FluentLocatorAssertions ContainTextAsync(IEnumerable<string> expected,
+        LocatorAssertionsToContainTextOptions? options = null, string because = "", params object[] becauseArgs)
+    {
+        var negate = NegateNext;
+        AddStep(() => negate
+                ? Expect(_locator).Not.ToContainTextAsync(expected, options)
+                : Expect(_locator).ToContainTextAsync(expected, options),
+            new Because(because, becauseArgs));
+        return this;
+    }
+
+    /// <summary>
+    /// Ensures the ILocator points to an element that contains the given text
+    /// See <see cref="ILocatorAssertions.ToContainTextAsync(IEnumerable{Regex}, LocatorAssertionsToContainTextOptions?)"/>.
+    /// </summary>
+    public FluentLocatorAssertions ContainTextAsync(IEnumerable<Regex> expected,
+        LocatorAssertionsToContainTextOptions? options = null, string because = "", params object[] becauseArgs)
+    {
+        var negate = NegateNext;
+        AddStep(() => negate
+                ? Expect(_locator).Not.ToContainTextAsync(expected, options)
+                : Expect(_locator).ToContainTextAsync(expected, options),
             new Because(because, becauseArgs));
         return this;
     }
