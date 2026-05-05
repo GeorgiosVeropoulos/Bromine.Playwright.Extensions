@@ -184,9 +184,9 @@ public class LocatorShouldTests : TestBase
     [Test]
     public async Task ContainTextAsync_Enumerable_ShouldPass_ForMultipleElements()
     {
-        await Page.Locator("[data-testid='paragraph']").Should()
-            .ContainTextAsync(new[] { "Hello", "World" })
-            .ContainTextAsync(new [] { new Regex("Wor.*"), new Regex("Hel.*") });
+        await Page.Locator("[data-testid='list-item']").Should()
+            .ContainTextAsync(new[] { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" })
+            .ContainTextAsync(new[] { new Regex("Item.*"), new Regex("Item.*"), new Regex("Item.*"), new Regex("Item.*"), new Regex("Item.*") });
     }
     
     [Test]
