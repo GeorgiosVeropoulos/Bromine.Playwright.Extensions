@@ -165,6 +165,49 @@ public class LocatorShouldTests : TestBase
             .HaveTextAsync(new[] { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" });
     }
 
+    [Test]
+    public async Task ContainTextAsync_String_ShouldPass_WhenTextMatchesPattern()
+    {
+        await Page.Locator("[data-testid='paragraph']").Should()
+            .ContainTextAsync("Hello")
+            .ContainTextAsync("World");
+    }
+    
+    [Test]
+    public async Task ContainTextAsync_Regex_ShouldPass_WhenTextMatchesPattern()
+    {
+        await Page.Locator("[data-testid='paragraph']").Should()
+            .ContainTextAsync(new Regex("Wor.*"))
+            .ContainTextAsync(new Regex("Hel.*"));
+    }
+    
+    [Test]
+    public async Task ContainTextAsync_Enumerable_ShouldPass_ForMultipleElements()
+    {
+        await Page.Locator("[data-testid='paragraph']").Should()
+            .ContainTextAsync(new[] { "Hello", "World" })
+            .ContainTextAsync(new [] { new Regex("Wor.*"), new Regex("Hel.*") });
+    }
+    
+    [Test]
+    public async Task ContainTextAsync_Not_ShouldPass_WhenTextDoesNotContain()
+    {        
+        await Page.Locator("[data-testid='paragraph']").Should()
+            .Not.ContainTextAsync("Goodbye")
+            .Not.ContainTextAsync(new Regex("Goodbye.*"));
+    }
+    
+    [Test]
+    public async Task ContainTextAsync_ShouldThrow_WhenTextDoesNotContain()
+    {
+        var locator = Page.Locator("[data-testid='paragraph']");
+
+        var ex = Assert.ThrowsAsync<PlaywrightException>(
+            async () => await locator.Should().ContainTextAsync("Goodbye", because:"it should contain the word 'Goodbye'"));
+
+        Assert.That(ex!.Message, Does.Contain("expected to contain text"));
+    }
+
     // ───────────────────────── Value ─────────────────────────
 
     [Test]

@@ -7,6 +7,10 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<RootNamespace>Bromine.Playwright.Extensions</RootNamespace>
 		<IsPackable>false</IsPackable>
+		
+	</PropertyGroup>
+	<PropertyGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
+		<RuntimeIdentifier>osx-x64</RuntimeIdentifier>
 	</PropertyGroup>
 
 	<ItemGroup>
