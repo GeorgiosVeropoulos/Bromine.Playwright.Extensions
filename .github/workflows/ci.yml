@@ -8,6 +8,9 @@ on:
 
 env:
   DOTNET_VERSION: '8.0.x'
+  # Engines to install AND to run, declared once. Space-separated so the same value works
+  # as the `playwright install` argument list and as the test-side engine filter.
+  PW_ENGINES: chromium
 
 jobs:
   build-and-test:
@@ -30,7 +33,7 @@ jobs:
           dotnet build -c Release --no-restore
 
       - name: Install Playwright browsers
-        run: pwsh tests/bin/Release/net8.0/playwright.ps1 install chromium --with-deps
+        run: pwsh tests/bin/Release/net8.0/playwright.ps1 install ${{ env.PW_ENGINES }} --with-deps
 
       - name: Run tests
         run: >
@@ -39,8 +42,9 @@ jobs:
           --logger "trx;LogFileName=results.trx"
           --collect:"XPlat Code Coverage"
           --results-directory tests/TestResults
-        env:
-          CI: true
+        # PW_ENGINES comes from the workflow env above, so the fixtures for engines that
+        # aren't installed are skipped by config instead of attempting a launch.
+        # Headless is the test default, so nothing extra is needed for that.
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5

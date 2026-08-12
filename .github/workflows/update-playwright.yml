@@ -7,6 +7,8 @@ on:
 
 env:
   DOTNET_VERSION: '8.0.x'
+  # Engines to install AND to run, declared once.
+  PW_ENGINES: chromium
 
 jobs:
   check-and-update:
@@ -64,10 +66,8 @@ jobs:
           dotnet restore --source https://api.nuget.org/v3/index.json
           dotnet build Analyzers/Bromine.Playwright.Extensions.Analyzers.csproj -c Release --no-restore
           dotnet build -c Release --no-restore
-          pwsh tests/bin/Release/net8.0/playwright.ps1 install chromium --with-deps
+          pwsh tests/bin/Release/net8.0/playwright.ps1 install ${{ env.PW_ENGINES }} --with-deps
           dotnet test tests/Bromine.Playwright.Extensions.Tests.csproj -c Release --no-build
-        env:
-          CI: true
 
       - name: Create Pull Request
         if: steps.compare.outputs.UPDATE == 'true'

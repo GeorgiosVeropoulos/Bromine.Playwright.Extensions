@@ -172,6 +172,20 @@ public class FluentLocatorAssertions : FluentBase<FluentLocatorAssertions>
     }
     
     /// <summary>
+    /// Asserts that the locator points to an element that contains the given CSS class.
+    /// See <see cref="ILocatorAssertions.ToContainClassAsync(IEnumerable{string}, LocatorAssertionsToContainClassOptions?)"/>.
+    /// </summary>
+    public FluentLocatorAssertions ContainClassAsync(IEnumerable<string> expected, LocatorAssertionsToContainClassOptions? options = null, string because = "", params object[] becauseArgs)
+    {
+        var negate = NegateNext;
+        AddStep(() => negate
+                ? Expect(_locator).Not.ToContainClassAsync(expected, options)
+                : Expect(_locator).ToContainClassAsync(expected, options),
+            new Because(because, becauseArgs));
+        return this;
+    }
+    
+    /// <summary>
     /// Ensures the ILocator points to an element that contains the given text
     /// See <see cref="ILocatorAssertions.ToContainTextAsync(string, LocatorAssertionsToContainTextOptions?)"/>.
     /// </summary>

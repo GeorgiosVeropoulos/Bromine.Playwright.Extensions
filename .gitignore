@@ -11,6 +11,9 @@ obj/
 *.suo
 *.DotSettings.user
 
+## Local test settings (per-developer; copy testsettings.local.example.json to create)
+tests/testsettings.local.json
+
 ## OS
 .DS_Store
 Thumbs.db

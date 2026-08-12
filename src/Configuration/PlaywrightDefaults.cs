@@ -1,3 +1,5 @@
+using Microsoft.Playwright;
+
 namespace Bromine.Playwright.Extensions.Configuration;
 
 /// <summary>
@@ -6,11 +8,29 @@ namespace Bromine.Playwright.Extensions.Configuration;
 /// </summary>
 public static class PlaywrightDefaults
 {
+    private static float _assertionTimeout = 5_000;
+
     /// <summary>
     /// Default timeout in milliseconds for assertion operations.
     /// Default: 5000ms (5 seconds).
+    /// <para>
+    /// Setting this applies it to Playwright's assertion engine via
+    /// <see cref="Microsoft.Playwright.Assertions.SetDefaultExpectTimeout"/>, so every <c>.Should()</c> chain
+    /// honours it without having to pass an options object per call. Lowering it mainly
+    /// speeds up assertions that are *expected* to fail, since those wait out the full
+    /// window before throwing.
+    /// </para>
     /// </summary>
-    public static float AssertionTimeout { get; set; } = 5_000;
+    public static float AssertionTimeout
+    {
+        get => _assertionTimeout;
+        set
+        {
+            _assertionTimeout = value;
+            // Fully qualified: bare `Assertions` would bind to this library's own namespace.
+            Microsoft.Playwright.Assertions.SetDefaultExpectTimeout(value);
+        }
+    }
 
     /// <summary>
     /// Default timeout in milliseconds for navigation operations.

@@ -1,0 +1,18 @@
+// Copy this file to `testsettings.local.json` (gitignored) to change how tests run on
+// your machine. Nothing here affects CI or your teammates.
+//
+// Every value is optional. Environment variables win over this file:
+//   PW_HEADED=1  PW_SLOWMO=250  PW_ENGINES=Chromium,Firefox
+{
+  // Show the browser window. Keep this false for normal runs — every test gets its own
+  // browser, so a full headed run opens hundreds of windows and screenshot capture stalls
+  // when they lose focus. Turn it on to watch a single test you are debugging.
+  "headed": false,
+
+  // Slow every Playwright operation down by this many milliseconds. Useful with headed.
+  "slowMoMs": 0,
+
+  // Engines to run; the others are skipped. Omit or leave empty to run all three.
+  // Narrowing to Chromium makes a full local run roughly three times faster.
+  "engines": ["Chromium", "Firefox", "Webkit"]
+}

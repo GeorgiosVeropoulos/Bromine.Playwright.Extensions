@@ -5,11 +5,10 @@ using NUnit.Framework;
 
 namespace Bromine.Playwright.Extensions.Tests.Exceptions;
 
-[TestFixture]
 public class ExceptionTests : TestBase
 {
-    
-    
+    public ExceptionTests(BrowserType browser) : base(browser) { }
+
     [Test]
     public void VerifyNotFoundLocatorThrowsCorrectMessage()
     {

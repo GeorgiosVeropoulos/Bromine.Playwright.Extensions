@@ -5,9 +5,10 @@ using NUnit.Framework;
 
 namespace Bromine.Playwright.Extensions.Tests.Extensions;
 
-[TestFixture]
 public class PageExtensionsTests : TestBase
 {
+    public PageExtensionsTests(BrowserType browser) : base(browser) { }
+
     // ───────────────────────── NavigateAndWaitAsync ─────────────────────────
 
     [Test]

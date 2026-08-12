@@ -13,11 +13,11 @@ namespace Bromine.Playwright.Extensions.Extensions;
 /// </summary>
 public class FluentBase<TSelf> : ICriticalNotifyCompletion where TSelf : FluentBase<TSelf>
 {
-    private readonly List<(Func<Task> Step, Because because)> _steps = new();
+    private readonly List<(Func<Task> Step, IBecause because)> _steps = new();
     private Task? _runTask;
     protected bool NegateNext = false;
 
-    protected void AddStep(Func<Task> step, Because because)
+    protected void AddStep(Func<Task> step, IBecause because)
     {
         NegateNext = false;
         _steps.Add((step, because));
@@ -53,10 +53,21 @@ public class FluentBase<TSelf> : ICriticalNotifyCompletion where TSelf : FluentB
                 if (string.IsNullOrWhiteSpace(because.Message))
                     throw;
 
-                var formattedBecause = because.Args.Length > 0 
-                    ? string.Format(because.Message, because.Args) 
-                    : because.Message;
-                throw new PlaywrightException($"{formattedBecause}\n{e.Message}");
+                string formattedBecause;
+                try
+                {
+                    formattedBecause = because.Args.Length > 0
+                        ? string.Format(because.Message, because.Args)
+                        : because.Message;
+                }
+                catch (FormatException)
+                {
+                    // Fall back to the raw message if the format string is invalid,
+                    // so we never mask the underlying assertion failure.
+                    formattedBecause = because.Message;
+                }
+
+                throw new PlaywrightException($"{formattedBecause}\n{e.Message}", e);
             }
         }
     }

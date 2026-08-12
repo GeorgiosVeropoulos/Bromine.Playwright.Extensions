@@ -1,19 +1,21 @@
 using System.Text.RegularExpressions;
 using Bromine.Playwright.Extensions.Assertions;
+using Bromine.Playwright.Extensions.Tests.Constants;
 using Microsoft.Playwright;
 using NUnit.Framework;
 
 namespace Bromine.Playwright.Extensions.Tests.Should;
 
-[TestFixture]
 public class PageShouldTests : TestBase
 {
+    public PageShouldTests(BrowserType browser) : base(browser) { }
+
     // ───────────────────────── HaveTitleAsync ─────────────────────────
 
     [Test]
     public async Task HaveTitleAsync_ShouldPass_WhenTitleMatches()
     {
-        await Page.Should().HaveTitleAsync("Bromine Test Page");
+        await Page.Should().HaveTitleAsync(KnownPageTitles.BromineTestPage);
     }
 
     [Test]

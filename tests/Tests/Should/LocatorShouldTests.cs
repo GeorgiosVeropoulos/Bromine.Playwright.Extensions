@@ -5,9 +5,10 @@ using NUnit.Framework;
 
 namespace Bromine.Playwright.Extensions.Tests.Should;
 
-[TestFixture]
 public class LocatorShouldTests : TestBase
 {
+    public LocatorShouldTests(BrowserType browser) : base(browser) { }
+
     // ───────────────────────── Visibility / Attachment ─────────────────────────
 
     [Test]

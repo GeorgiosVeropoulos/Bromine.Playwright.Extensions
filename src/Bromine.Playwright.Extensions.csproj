@@ -10,13 +10,15 @@
 		<!-- NuGet Package Metadata -->
 		<IsPackable>true</IsPackable>
 		<PackageId>Bromine.Playwright.Extensions</PackageId>
-		<Version>1.0.2</Version>
+		<Version>1.1.0</Version>
 		<Authors>George Veropoulos</Authors>
 		<Company>Bromine</Company>
 		<Description>Playwright extensions library providing fluent assertions (.Should()), browser/context builder patterns, and enhanced Page/Locator extension methods for E2E test automation.</Description>
 		<PackageTags>playwright;testing;automation;e2e;fluent-assertions;builder-pattern</PackageTags>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageProjectUrl>https://github.com/GeorgiosVeropoulos/Bromine.Playwright.Extensions</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/GeorgiosVeropoulos/Bromine.Playwright.Extensions</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 
 		<!-- XML Documentation -->
@@ -25,7 +27,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Playwright" Version="1.56.0" />
+		<PackageReference Include="Microsoft.Playwright" Version="1.57.0" />
 	</ItemGroup>
 
 	<ItemGroup>
