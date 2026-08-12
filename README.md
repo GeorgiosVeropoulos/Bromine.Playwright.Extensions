@@ -255,12 +255,36 @@ dotnet test tests/Bromine.Playwright.Extensions.Tests.csproj -c Release --no-bui
 
 ### Publishing a New Version
 
+Use an **annotated** tag (`-a`). Its message becomes the release notes:
+
 ```bash
-git tag v1.0.1
-git push origin v1.0.1
+git tag -a v1.1.0 -m "Updated Microsoft.Playwright to 1.57.0"
 ```
 
-The tag version (`1.0.1`) becomes the NuGet package version automatically. Tests must pass before the package is published.
+```bash
+git push origin v1.1.0
+```
+
+The tag version (`1.1.0`) becomes the NuGet package version automatically, and the tag message
+becomes both the GitHub Release body and the package's release notes on nuget.org. Tests must
+pass before the package is published.
+
+For a longer note, pass `-m` more than once — each becomes its own paragraph:
+
+```bash
+git tag -a v1.1.0 -m "Updated Microsoft.Playwright to 1.57.0" -m "Adds the ContainClassAsync(IEnumerable<string>) overload."
+```
+
+A plain `git tag v1.1.0` (lightweight) still works, but it carries no message — the release
+notes silently fall back to the tagged commit's message instead.
+
+Tags are only safe to replace **before** they are pushed:
+
+```bash
+git tag -f -a v1.1.0 -m "New message"
+```
+
+Once a tag is pushed the publish runs, and a NuGet version can never be reused — only delisted.
 
 ### Setup
 
