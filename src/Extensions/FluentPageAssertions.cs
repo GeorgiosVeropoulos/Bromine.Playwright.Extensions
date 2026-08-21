@@ -76,21 +76,46 @@ public class FluentPageAssertions : FluentBase<FluentPageAssertions>
     /// <summary>
     /// Asserts that the page's accessibility tree matches the expected aria snapshot.
     /// <para>
-    /// Snapshots the whole document, which is what <c>Page.AriaSnapshotAsync()</c> is defined as,
-    /// and matches it with Playwright's own subset-matching rules — so the expected snapshot only
-    /// has to describe the parts you care about. Requires Playwright 1.59 or newer.
+    /// Matched with Playwright's own subset-matching rules, so the expected snapshot only has to
+    /// describe the parts you care about.
     /// </para>
-    /// See <see cref="ILocatorAssertions.ToMatchAriaSnapshotAsync"/>.
+    /// <para>
+    /// Backed by the native page-level assertion from Playwright 1.60. Before that this had to
+    /// snapshot the <c>body</c> locator instead, which is what <c>Page.AriaSnapshotAsync()</c> is
+    /// defined as — the results are equivalent, but the native assertion reports against the page
+    /// rather than a synthetic locator. Requires Playwright 1.60 or newer.
+    /// </para>
+    /// See <see cref="IPageAssertions.ToMatchAriaSnapshotAsync"/>.
     /// </summary>
-    public FluentPageAssertions MatchAriaSnapshotAsync(string expected, LocatorAssertionsToMatchAriaSnapshotOptions? options = null, string because = "", params object[] becauseArgs)
+    public FluentPageAssertions MatchAriaSnapshotAsync(string expected, PageAssertionsToMatchAriaSnapshotOptions? options = null, string because = "", params object[] becauseArgs)
     {
         var negate = NegateNext;
         AddStep(() => negate
-            ? Expect(_page.Locator("body")).Not.ToMatchAriaSnapshotAsync(expected, options)
-            : Expect(_page.Locator("body")).ToMatchAriaSnapshotAsync(expected, options),
+            ? Expect(_page).Not.ToMatchAriaSnapshotAsync(expected, options)
+            : Expect(_page).ToMatchAriaSnapshotAsync(expected, options),
             new Because(because, becauseArgs));
         return this;
     }
+
+    /// <summary>
+    /// Obsolete overload kept for callers written against 1.3.0, when this assertion snapshotted
+    /// the <c>body</c> locator and locator options were the honest signature.
+    /// <para>
+    /// Deliberately takes <paramref name="options"/> as a required parameter. Were it optional,
+    /// <c>MatchAriaSnapshotAsync(expected)</c> would match both overloads and fail to compile as
+    /// ambiguous — and it would resolve here, warning callers who never passed options at all.
+    /// Requiring it means only the calls that really do use the wrong type see the warning.
+    /// </para>
+    /// </summary>
+    [Obsolete("Pass PageAssertionsToMatchAriaSnapshotOptions instead. This assertion now uses " +
+              "Playwright's native page-level matcher, so the page option type is the correct one. " +
+              "Both types carry only Timeout, so the change is mechanical.")]
+    public FluentPageAssertions MatchAriaSnapshotAsync(string expected, LocatorAssertionsToMatchAriaSnapshotOptions options, string because = "", params object[] becauseArgs)
+        => MatchAriaSnapshotAsync(
+            expected,
+            options is null ? null : new PageAssertionsToMatchAriaSnapshotOptions { Timeout = options.Timeout },
+            because,
+            becauseArgs);
 
     /// <summary>
     /// Asserts that the page logged at least one <c>error</c>-level console message.

@@ -4,8 +4,14 @@ using NUnit.Framework;
 namespace Bromine.Playwright.Extensions.Tests.Extensions;
 
 /// <summary>
-/// Covers the aria snapshot helpers built on Playwright 1.59's page-level
-/// <c>AriaSnapshotAsync</c> and the new <c>Depth</c> / <c>Mode</c> options.
+/// Covers the aria snapshot helpers.
+/// <para>
+/// These assert that our wrappers reach the right Playwright call with the right arguments —
+/// scoped to the locator rather than the page, <c>Mode</c> and <c>Depth</c> actually forwarded.
+/// They deliberately do not assert Playwright's snapshot syntax or its exact truncation rules:
+/// that is upstream's contract, and pinning it here would turn an upstream improvement into a
+/// red build in this repo. The caveats table in the README carries what we found instead.
+/// </para>
 /// </summary>
 public class AriaSnapshotTests : TestBase
 {
@@ -23,36 +29,24 @@ public class AriaSnapshotTests : TestBase
     }
 
     [Test]
-    public async Task Page_GetAriaSnapshotAsync_WithDepth_ShouldBeIgnoredInDefaultMode()
+    public async Task Page_GetAriaSnapshotForAiAsync_ShouldForwardAiMode()
     {
-        // Pins the documented caveat: the default snapshot is a flat list, and Playwright 1.59
-        // does not truncate it. If a later version starts honouring depth here, this fails and
-        // the docs need updating.
-        var full = await Page.GetAriaSnapshotAsync();
-        var shallow = await Page.GetAriaSnapshotAsync(depth: 1);
+        var normal = await Page.GetAriaSnapshotAsync();
+        var forAi = await Page.GetAriaSnapshotForAiAsync();
 
-        Assert.That(shallow, Is.EqualTo(full));
+        Assert.That(forAi, Is.Not.Empty);
+        // Differing output is enough to prove Mode reached Playwright, without pinning the
+        // shape of what AI mode emits.
+        Assert.That(forAi, Is.Not.EqualTo(normal));
     }
 
     [Test]
-    public async Task Page_GetAriaSnapshotForAiAsync_ShouldReturnSnapshot()
-    {
-        var snapshot = await Page.GetAriaSnapshotForAiAsync();
-
-        Assert.That(snapshot, Is.Not.Empty);
-        // AI mode annotates nodes with refs, which the default mode does not.
-        Assert.That(snapshot, Does.Contain("[ref="));
-    }
-
-    [Test]
-    public async Task Page_GetAriaSnapshotForAiAsync_WithDepth_ShouldTruncateTheTree()
+    public async Task Page_GetAriaSnapshotForAiAsync_ShouldForwardDepth()
     {
         var full = await Page.GetAriaSnapshotForAiAsync();
-        var depth1 = await Page.GetAriaSnapshotForAiAsync(depth: 1);
-        var depth2 = await Page.GetAriaSnapshotForAiAsync(depth: 2);
+        var limited = await Page.GetAriaSnapshotForAiAsync(depth: 1);
 
-        Assert.That(depth1.Length, Is.LessThan(depth2.Length));
-        Assert.That(depth2.Length, Is.LessThan(full.Length));
+        Assert.That(limited, Is.Not.EqualTo(full), "depth should have reached Playwright");
     }
 
     // ───────────────────────── Locator snapshots ─────────────────────────
@@ -64,29 +58,19 @@ public class AriaSnapshotTests : TestBase
 
         Assert.That(snapshot, Does.Contain("About"));
         Assert.That(snapshot, Does.Contain("Contact"));
-        // Scoped to the nav, so the page heading must not leak in.
+        // The wrapper must target the locator, not the whole page.
         Assert.That(snapshot, Does.Not.Contain("Welcome to Bromine Testing"));
     }
 
     [Test]
-    public async Task Locator_GetAriaSnapshotAsync_WithDepth_ShouldBeAccepted()
+    public async Task Locator_GetAriaSnapshotForAiAsync_ShouldForwardAiMode()
     {
         var locator = Page.Locator("[data-testid=navigation]");
 
-        // Depth is accepted but not honoured for locator snapshots in 1.59 — asserted rather
-        // than assumed, so a behaviour change upstream surfaces here.
-        var full = await locator.GetAriaSnapshotAsync();
-        var shallow = await locator.GetAriaSnapshotAsync(depth: 1);
+        var normal = await locator.GetAriaSnapshotAsync();
+        var forAi = await locator.GetAriaSnapshotForAiAsync();
 
-        Assert.That(shallow, Is.EqualTo(full));
-    }
-
-    [Test]
-    public async Task Locator_GetAriaSnapshotForAiAsync_ShouldReturnSnapshot()
-    {
-        var snapshot = await Page.Locator("[data-testid=navigation]").GetAriaSnapshotForAiAsync();
-
-        Assert.That(snapshot, Is.Not.Empty);
-        Assert.That(snapshot, Does.Contain("[ref="));
+        Assert.That(forAi, Is.Not.Empty);
+        Assert.That(forAi, Is.Not.EqualTo(normal));
     }
 }
