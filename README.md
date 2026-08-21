@@ -18,7 +18,7 @@ dotnet add package Bromine.Playwright.Extensions
 Or add to your `.csproj`:
 
 ```xml
-<PackageReference Include="Bromine.Playwright.Extensions" Version="1.3.0" />
+<PackageReference Include="Bromine.Playwright.Extensions" Version="1.4.0" />
 ```
 
 ---
@@ -296,6 +296,93 @@ CI. Use them directly off the Playwright objects if you need them.
 - `IBrowser.BindAsync` / `UnbindAsync` — exposes the browser to `playwright-cli` over a port
 - `ICDPSession.Close` event — Chromium-only, low level
 
+### 7. Playwright 1.60 APIs
+
+```csharp
+using Bromine.Playwright.Extensions.Extensions;
+
+// Drag-and-drop onto a drop zone. Unlike SetInputFilesAsync this fires real drag events,
+// so it works against dropzones with no <input type="file"> behind them.
+await page.Locator("#dropzone").DropFilesAsync(["./fixtures/invoice.pdf"]);
+await page.Locator("#dropzone").DropFilesAsync([
+    new FilePayload { Name = "generated.csv", MimeType = "text/csv", Buffer = bytes }
+]);
+await page.Locator("#dropzone").DropTextAsync("pasted text");
+await page.Locator("#dropzone").DropDataAsync([
+    new KeyValuePair<string, string>("text/uri-list", "https://example.com/")
+]);
+
+// Outline an element for the duration of an action, so a screencast shows what it acted on
+await page.Locator("#total").HighlightWhileAsync(
+    () => page.Locator("#checkout").ClickAsync(),
+    style: "outline: 3px solid magenta");
+
+// HAR for just one step, rather than the whole session as WithHarRecording gives you
+string har = await context.RecordHarAsync("./har/checkout.har", async () =>
+{
+    await page.Locator("#checkout").ClickAsync();
+});
+
+// Or start/stop explicitly, optionally filtered
+await context.StartHarRecordingAsync("./har/api.har", urlFilter: "**/api/**");
+await page.Locator("#refresh").ClickAsync();
+await context.StopHarRecordingAsync();
+```
+
+`page.Should().MatchAriaSnapshotAsync(...)` now runs on Playwright's native page-level assertion
+instead of snapshotting the `body` locator.
+
+> **Deprecated, not broken (1.4.0):** the `options` parameter should now be
+> `PageAssertionsToMatchAriaSnapshotOptions`, matching what the method actually calls. The old
+> `LocatorAssertionsToMatchAriaSnapshotOptions` overload still works and still compiles — it is
+> marked `[Obsolete]` and forwards to the new one, so you get a warning rather than an error:
+>
+> ```csharp
+> // warns
+> .MatchAriaSnapshotAsync(snap, new LocatorAssertionsToMatchAriaSnapshotOptions { Timeout = 5_000 })
+> // preferred
+> .MatchAriaSnapshotAsync(snap, new PageAssertionsToMatchAriaSnapshotOptions { Timeout = 5_000 })
+> ```
+>
+> `MatchAriaSnapshotAsync(snap)` and `MatchAriaSnapshotAsync(snap, because: "…")` are untouched and
+> warning-free — the obsolete overload takes its options parameter as required precisely so those
+> calls don't resolve to it.
+
+#### Caveats found while testing 1.60
+
+Verified against Microsoft.Playwright 1.60.0 on Chromium, Firefox and WebKit:
+
+| API | Status |
+|---|---|
+| `LocatorAssertionsToHaveCSSOptions.Pseudo` | **Silently ignored** — the assertion always reads the element's own computed style. Worse than inert: `Pseudo = Before` *passes* against the element's value and *fails* against the real `::before` value, so a test using it passes for the wrong reason. Avoid until fixed. |
+| `AriaSnapshotOptions.Boxes` | Inert. Output is byte-identical with `Boxes` on and off, in both modes, page and locator. Not exposed. |
+| `Locator.HighlightAsync` / `Tracing.StartHarAsync` | Work, but the returned `IAsyncDisposable` is a no-op stub, so `await using` silently does nothing. Wrapped with explicit scopes (`HighlightWhileAsync`, `RecordHarAsync`) that actually clean up. |
+| `Locator.DropAsync` | Works fully — file paths, in-memory `FilePayload`, raw MIME data, and `Position`. |
+
+#### Breaking changes in Playwright 1.60
+
+This library uses none of these, so upgrading is safe for it — but your own test code might:
+
+- `ExposeBindingOptions.Handle` removed from both `IPage` and `IBrowserContext` (this is the change
+  announced for 1.59 that only actually landed in 1.60)
+- `IPage.ExposeBindingAsync(string, Action, options)` and the `IBrowserContext` equivalents removed
+- `IBrowserContext.ExposeBindingAsync<T>(string, Func<BindingSource, IJSHandle, T>)` removed
+- `ILocator.HighlightAsync()` parameterless overload removed — replaced by the options overload
+
+#### Intentionally not wrapped from 1.60
+
+- `IBrowserContext.Download` / `FrameAttached` / `FrameDetached` / `FrameNavigated` / `PageClose` /
+  `PageLoad`, and `IBrowser.Context` — events; the library wraps state and assertions, not event
+  plumbing, and these are awkward to assert on in CI
+- `GetByRoleOptions.Description` — a locator-factory option; this library does not wrap locator
+  construction
+- `Assertions.Expect(x, message)` — Playwright's new native failure message. Our `because` already
+  covers this, and uniformly: it decorates custom assertions like `HaveStatusAsync` too, which the
+  native parameter cannot reach
+- `Program.RunWithResult`, `Helpers.RegexOptionsExtensions`, `ConnectOverCDPOptions.NoDefaults`,
+  `IWebSocketRoute.Protocols`, `WebErrorLocation` — CLI, infrastructure, or areas the library does
+  not cover
+
 ---
 
 ## Static Analysis — Unawaited Assertion Detection
@@ -403,7 +490,7 @@ The `.nupkg` includes the library DLL, XML docs, and the bundled Roslyn analyzer
 dotnet nuget add source /path/to/nupkgs --name LocalBromine
 
 # Install
-dotnet add package Bromine.Playwright.Extensions --version 1.3.0
+dotnet add package Bromine.Playwright.Extensions --version 1.4.0
 ```
 
 ---
@@ -411,7 +498,7 @@ dotnet add package Bromine.Playwright.Extensions --version 1.3.0
 ## Requirements
 
 - .NET 8.0+
-- Microsoft.Playwright 1.59.0+
+- Microsoft.Playwright 1.60.0+
 
 ## License
 

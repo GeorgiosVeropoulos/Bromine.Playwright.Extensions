@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drop - Bromine Test</title>
+    <link rel="icon" href="data:,">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2rem; }
+        #zone { width: 320px; height: 180px; border: 2px dashed #888; display: flex;
+                align-items: center; justify-content: center; }
+        #zone.over { border-color: #007bff; }
+    </style>
+</head>
+<body>
+
+    <h1 data-testid="drop-heading">Drop target</h1>
+
+    <div id="zone" data-testid="zone">Drop here</div>
+
+    <!-- Tests read these instead of the raw event, so assertions stay about what the page
+         actually received rather than about DataTransfer plumbing. -->
+    <pre data-testid="dropped-files" id="dropped-files"></pre>
+    <pre data-testid="dropped-types" id="dropped-types"></pre>
+    <pre data-testid="dropped-text" id="dropped-text"></pre>
+    <pre data-testid="drop-count" id="drop-count">0</pre>
+
+    <script>
+        const zone = document.getElementById('zone');
+
+        zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('over'); });
+        zone.addEventListener('dragleave', () => zone.classList.remove('over'));
+
+        zone.addEventListener('drop', e => {
+            e.preventDefault();
+            zone.classList.remove('over');
+
+            const dt = e.dataTransfer;
+
+            // "name:size" per file keeps the assertion readable and covers both the path-based
+            // and in-memory payload shapes.
+            document.getElementById('dropped-files').textContent =
+                [...(dt.files || [])].map(f => f.name + ':' + f.size).join(',');
+
+            document.getElementById('dropped-types').textContent =
+                [...(dt.types || [])].join(',');
+
+            document.getElementById('dropped-text').textContent = dt.getData('text/plain') || '';
+
+            const counter = document.getElementById('drop-count');
+            counter.textContent = String(parseInt(counter.textContent, 10) + 1);
+        });
+    </script>
+
+</body>
+</html>
