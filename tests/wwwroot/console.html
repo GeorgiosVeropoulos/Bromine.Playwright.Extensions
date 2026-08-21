@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Console - Bromine Test</title>
+    <!-- Suppresses the favicon request. Without it the 404 is logged as a console *error* in
+         Chromium, which would make every "no console errors" assertion here fail. -->
+    <link rel="icon" href="data:,">
+</head>
+<body>
+
+    <h1 data-testid="console-heading">Console diagnostics</h1>
+    <p data-testid="console-description">Buttons that emit console output and uncaught errors on demand.</p>
+
+    <div data-testid="console-buttons">
+        <button data-testid="log-btn" onclick="console.log('button log message')">Log</button>
+        <button data-testid="warn-btn" onclick="console.warn('button warning message')">Warn</button>
+        <button data-testid="error-btn" onclick="console.error('button error message')">Console error</button>
+        <button data-testid="throw-btn" onclick="setTimeout(function () { throw new Error('uncaught button failure'); }, 0)">
+            Throw
+        </button>
+    </div>
+
+    <script>
+        // Emitted on load so tests have a message to find without interacting first.
+        console.log('page loaded cleanly');
+    </script>
+
+</body>
+</html>

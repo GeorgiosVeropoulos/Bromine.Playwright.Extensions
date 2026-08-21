@@ -33,6 +33,7 @@ public class PlaywrightBrowserBuilder
     private bool? _handleSigterm;
     private bool? _handleSighup;
     private string? _tracesDir;
+    private string? _artifactsDir;
 
     private PlaywrightBrowserBuilder() { }
 
@@ -184,6 +185,19 @@ public class PlaywrightBrowserBuilder
     }
 
     /// <summary>
+    /// Set the directory that traces, videos, downloads and HAR files are saved into.
+    /// <para>
+    /// Unlike the default temporary directory, this one survives browser close, so artifacts
+    /// are still there to collect after the run. Requires Playwright 1.59 or newer.
+    /// </para>
+    /// </summary>
+    public PlaywrightBrowserBuilder WithArtifactsDir(string path)
+    {
+        _artifactsDir = path;
+        return this;
+    }
+
+    /// <summary>
     /// Handle SIGINT signal.
     /// </summary>
     public PlaywrightBrowserBuilder HandleSigint(bool handle = true)
@@ -240,7 +254,8 @@ public class PlaywrightBrowserBuilder
             HandleSIGINT = _handleSigint,
             HandleSIGTERM = _handleSigterm,
             HandleSIGHUP = _handleSighup,
-            TracesDir = _tracesDir
+            TracesDir = _tracesDir,
+            ArtifactsDir = _artifactsDir
         };
 
         var browser = await browserType.LaunchAsync(options);

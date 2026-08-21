@@ -45,6 +45,14 @@ public class TestServerFixture
             return Results.Ok(new { header = "present" });
         });
 
+        // Stays pending long enough for a request to be observed before its response exists,
+        // which is what IRequest.ExistingResponse is for.
+        _app.MapGet("/api/slow", async () =>
+        {
+            await Task.Delay(2_000);
+            return Results.Ok(new { slow = true });
+        });
+
         _app.MapGet("/api/download", () =>
         {
             var content = "This is a test download file."u8.ToArray();

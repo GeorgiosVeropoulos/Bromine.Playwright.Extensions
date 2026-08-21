@@ -76,6 +76,96 @@ public class BrowserContextBuilderTests
         Assert.That(builder.WithHarRecording("/tmp/har.har"), Is.SameAs(builder));
         Assert.That(builder.WithVideoRecording("/tmp/videos"), Is.SameAs(builder));
         Assert.That(builder.WithTracing(), Is.SameAs(builder));
+        Assert.That(builder.WithLiveTracing(), Is.SameAs(builder));
+    }
+
+    // ───────────────────────── WithLiveTracing ─────────────────────────
+
+    [Test]
+    public async Task WithLiveTracing_ShouldStartTracingAndProduceATrace()
+    {
+        var traceDir = Path.Combine(Path.GetTempPath(), $"pw-live-trace-{Guid.NewGuid()}");
+        Directory.CreateDirectory(traceDir);
+        var tracePath = Path.Combine(traceDir, "trace.zip");
+
+        try
+        {
+            _context = await BrowserContextBuilder.For(_browser)
+                .WithLiveTracing()
+                .BuildAsync();
+
+            var page = await _context.NewPageAsync();
+            await page.GotoAsync(TestServerFixture.BaseUrl);
+            await page.CloseAsync();
+
+            // Stopping succeeds only if WithLiveTracing actually started tracing.
+            await _context.Tracing.StopAsync(new TracingStopOptions { Path = tracePath });
+
+            Assert.That(File.Exists(tracePath), Is.True);
+            Assert.That(new FileInfo(tracePath).Length, Is.GreaterThan(0));
+        }
+        finally
+        {
+            if (Directory.Exists(traceDir))
+                Directory.Delete(traceDir, recursive: true);
+        }
+    }
+
+    [Test]
+    public async Task WithLiveTracing_AfterWithTracing_ShouldKeepTracingEnabled()
+    {
+        var traceDir = Path.Combine(Path.GetTempPath(), $"pw-live-trace-{Guid.NewGuid()}");
+        Directory.CreateDirectory(traceDir);
+        var tracePath = Path.Combine(traceDir, "trace.zip");
+
+        try
+        {
+            _context = await BrowserContextBuilder.For(_browser)
+                .WithTracing(screenshots: false, snapshots: true, sources: false)
+                .WithLiveTracing()
+                .BuildAsync();
+
+            var page = await _context.NewPageAsync();
+            await page.GotoAsync(TestServerFixture.BaseUrl);
+            await page.CloseAsync();
+
+            await _context.Tracing.StopAsync(new TracingStopOptions { Path = tracePath });
+
+            Assert.That(File.Exists(tracePath), Is.True);
+        }
+        finally
+        {
+            if (Directory.Exists(traceDir))
+                Directory.Delete(traceDir, recursive: true);
+        }
+    }
+
+    [Test]
+    public async Task WithLiveTracing_False_ShouldStillTrace()
+    {
+        var traceDir = Path.Combine(Path.GetTempPath(), $"pw-live-trace-{Guid.NewGuid()}");
+        Directory.CreateDirectory(traceDir);
+        var tracePath = Path.Combine(traceDir, "trace.zip");
+
+        try
+        {
+            _context = await BrowserContextBuilder.For(_browser)
+                .WithLiveTracing(live: false)
+                .BuildAsync();
+
+            var page = await _context.NewPageAsync();
+            await page.GotoAsync(TestServerFixture.BaseUrl);
+            await page.CloseAsync();
+
+            await _context.Tracing.StopAsync(new TracingStopOptions { Path = tracePath });
+
+            Assert.That(File.Exists(tracePath), Is.True);
+        }
+        finally
+        {
+            if (Directory.Exists(traceDir))
+                Directory.Delete(traceDir, recursive: true);
+        }
     }
 
     // ───────────────────────── WithViewport ─────────────────────────
