@@ -322,7 +322,7 @@ public static class PageExtensions
     /// Discard every console message and page error recorded so far.
     /// <para>
     /// Useful between the arrange and act phases of a test, so a later
-    /// <c>HaveNoConsoleErrorsAsync</c> only sees what the action itself produced.
+    /// <c>Not.HaveConsoleErrorsAsync()</c> only sees what the action itself produced.
     /// </para>
     /// </summary>
     public static async Task ClearConsoleAsync(this IPage page)

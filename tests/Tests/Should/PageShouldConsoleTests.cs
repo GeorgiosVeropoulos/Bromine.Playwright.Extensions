@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using Bromine.Playwright.Extensions.Assertions;
+using Bromine.Playwright.Extensions.Configuration;
 using Bromine.Playwright.Extensions.Extensions;
 using Bromine.Playwright.Extensions.Tests.Support;
 using Microsoft.Playwright;
@@ -32,74 +34,135 @@ public class PageShouldConsoleTests : TestBase
             m => m.Any(x => x.Text.Contains(expectedText)));
     }
 
-    // ───────────────────────── HaveNoConsoleErrorsAsync ─────────────────────────
+    // ───────────────────────── Not.HaveConsoleErrorsAsync ─────────────────────────
 
     [Test]
-    public async Task HaveNoConsoleErrorsAsync_ShouldPass_OnCleanPage()
+    public async Task Not_HaveConsoleErrorsAsync_ShouldPass_AfterClearingTheError()
     {
-        await Page.Should().HaveNoConsoleErrorsAsync();
+        await ClickAndAwaitConsole("error-btn", "button error message");
+
+        await Page.ClearConsoleAsync();
+
+        await Page.Should().Not.HaveConsoleErrorsAsync();
     }
 
     [Test]
-    public async Task HaveNoConsoleErrorsAsync_ShouldThrow_AfterConsoleError()
+    public async Task Not_HaveConsoleErrorsAsync_ShouldPass_WhenOnlyWarningsWereLogged()
+    {
+        await ClickAndAwaitConsole("warn-btn", "button warning message");
+
+        await Page.Should().Not.HaveConsoleErrorsAsync();
+    }
+
+    [Test]
+    public async Task Not_HaveConsoleErrorsAsync_ShouldFailFast_RatherThanWaitOutTheTimeout()
+    {
+        await ClickAndAwaitConsole("error-btn", "button error message");
+
+        // Absence is checked once, so a failure must report well inside the assertion timeout
+        // rather than spending it. Guards the asymmetric-retry design: were this polled, it
+        // would take the full timeout and this would fail.
+        var stopwatch = Stopwatch.StartNew();
+        Assert.ThrowsAsync<PlaywrightException>(async () =>
+        {
+            await Page.Should().Not.HaveConsoleErrorsAsync();
+        });
+        stopwatch.Stop();
+
+        Assert.That(stopwatch.ElapsedMilliseconds, Is.LessThan(PlaywrightDefaults.AssertionTimeout / 2));
+    }
+
+    // ───────────────────────── HaveConsoleErrorsAsync ─────────────────────────
+
+    [Test]
+    public async Task HaveConsoleErrorsAsync_ShouldPass_WithoutWaitingFirst()
+    {
+        // No Eventually here on purpose: the assertion's own polling is what is under test.
+        await Page.Locator("[data-testid=error-btn]").ClickAsync();
+
+        await Page.Should().HaveConsoleErrorsAsync();
+    }
+
+    [Test]
+    public void HaveConsoleErrorsAsync_ShouldThrow_OnCleanPage()
+    {
+        var ex = Assert.ThrowsAsync<PlaywrightException>(async () =>
+        {
+            await Page.Should().HaveConsoleErrorsAsync();
+        });
+
+        Assert.That(ex!.Message, Does.Contain("none were recorded"));
+    }
+
+    [Test]
+    public async Task Not_HaveConsoleErrorsAsync_ShouldPass_OnCleanPage()
+    {
+        await Page.Should().Not.HaveConsoleErrorsAsync();
+    }
+
+    [Test]
+    public async Task Not_HaveConsoleErrorsAsync_ShouldThrow_AfterConsoleError()
     {
         await ClickAndAwaitConsole("error-btn", "button error message");
 
         var ex = Assert.ThrowsAsync<PlaywrightException>(async () =>
         {
-            await Page.Should().HaveNoConsoleErrorsAsync();
+            await Page.Should().Not.HaveConsoleErrorsAsync();
         });
 
         Assert.That(ex!.Message, Does.Contain("button error message"));
     }
 
     [Test]
-    public async Task HaveNoConsoleErrorsAsync_ShouldPass_AfterClearingTheError()
+    public async Task HaveConsoleErrorsAsync_SinceNavigationOnly_ShouldIgnoreErrorsFromPreviousPage()
     {
         await ClickAndAwaitConsole("error-btn", "button error message");
 
-        await Page.ClearConsoleAsync();
+        await Page.GotoAsync("/about.html");
 
-        await Page.Should().HaveNoConsoleErrorsAsync();
+        await Page.Should().Not.HaveConsoleErrorsAsync(sinceNavigationOnly: true);
     }
 
     [Test]
-    public async Task HaveNoConsoleErrorsAsync_ShouldPass_WhenOnlyWarningsWereLogged()
+    public void Because_ShouldIncludeMessageOnFailure_HaveConsoleErrors()
     {
-        await ClickAndAwaitConsole("warn-btn", "button warning message");
-
-        await Page.Should().HaveNoConsoleErrorsAsync();
-    }
-
-    // ───────────────────────── Not.HaveNoConsoleErrorsAsync ─────────────────────────
-
-    [Test]
-    public async Task Not_HaveNoConsoleErrorsAsync_ShouldPass_AfterConsoleError()
-    {
-        await ClickAndAwaitConsole("error-btn", "button error message");
-
-        await Page.Should().Not.HaveNoConsoleErrorsAsync();
-    }
-
-    [Test]
-    public void Not_HaveNoConsoleErrorsAsync_ShouldThrow_OnCleanPage()
-    {
-        Assert.ThrowsAsync<PlaywrightException>(async () =>
+        var ex = Assert.ThrowsAsync<PlaywrightException>(async () =>
         {
-            await Page.Should().Not.HaveNoConsoleErrorsAsync();
+            await Page.Should().HaveConsoleErrorsAsync(because: "the bad input should have been reported");
         });
+
+        Assert.That(ex!.Message, Does.Contain("the bad input should have been reported"));
     }
 
-    // ───────────────────────── HaveNoPageErrorsAsync ─────────────────────────
+    // ───────────────────────── HavePageErrorsAsync ─────────────────────────
 
     [Test]
-    public async Task HaveNoPageErrorsAsync_ShouldPass_OnCleanPage()
+    public async Task HavePageErrorsAsync_ShouldPass_WithoutWaitingFirst()
     {
-        await Page.Should().HaveNoPageErrorsAsync();
+        await Page.Locator("[data-testid=throw-btn]").ClickAsync();
+
+        await Page.Should().HavePageErrorsAsync();
     }
 
     [Test]
-    public async Task HaveNoPageErrorsAsync_ShouldThrow_AfterUncaughtException()
+    public void HavePageErrorsAsync_ShouldThrow_OnCleanPage()
+    {
+        var ex = Assert.ThrowsAsync<PlaywrightException>(async () =>
+        {
+            await Page.Should().HavePageErrorsAsync();
+        });
+
+        Assert.That(ex!.Message, Does.Contain("none were recorded"));
+    }
+
+    [Test]
+    public async Task Not_HavePageErrorsAsync_ShouldPass_OnCleanPage()
+    {
+        await Page.Should().Not.HavePageErrorsAsync();
+    }
+
+    [Test]
+    public async Task Not_HavePageErrorsAsync_ShouldThrow_AfterUncaughtException()
     {
         await Page.Locator("[data-testid=throw-btn]").ClickAsync();
 
@@ -107,20 +170,10 @@ public class PageShouldConsoleTests : TestBase
 
         var ex = Assert.ThrowsAsync<PlaywrightException>(async () =>
         {
-            await Page.Should().HaveNoPageErrorsAsync();
+            await Page.Should().Not.HavePageErrorsAsync();
         });
 
         Assert.That(ex!.Message, Does.Contain("uncaught button failure"));
-    }
-
-    [Test]
-    public async Task Not_HaveNoPageErrorsAsync_ShouldPass_AfterUncaughtException()
-    {
-        await Page.Locator("[data-testid=throw-btn]").ClickAsync();
-
-        await Eventually.Async(() => Page.PageErrorsAsync(), e => e.Count > 0);
-
-        await Page.Should().Not.HaveNoPageErrorsAsync();
     }
 
     // ───────────────────────── HaveConsoleMessageAsync ─────────────────────────
@@ -175,7 +228,7 @@ public class PageShouldConsoleTests : TestBase
 
         var ex = Assert.ThrowsAsync<PlaywrightException>(async () =>
         {
-            await Page.Should().HaveNoConsoleErrorsAsync(because: "the page should render without errors");
+            await Page.Should().Not.HaveConsoleErrorsAsync(because: "the page should render without errors");
         });
 
         Assert.That(ex!.Message, Does.Contain("the page should render without errors"));
@@ -200,10 +253,11 @@ public class PageShouldConsoleTests : TestBase
     [Test]
     public async Task Chaining_ShouldPass_ConsoleAssertionsWithTitle()
     {
+        // Each Not applies only to the assertion that follows it.
         await Page.Should()
             .HaveTitleAsync("Console - Bromine Test")
-            .HaveNoConsoleErrorsAsync()
-            .HaveNoPageErrorsAsync()
+            .Not.HaveConsoleErrorsAsync()
+            .Not.HavePageErrorsAsync()
             .HaveConsoleMessageAsync("page loaded cleanly");
     }
 
@@ -216,19 +270,7 @@ public class PageShouldConsoleTests : TestBase
         {
             await Page.Should()
                 .HaveTitleAsync("Console - Bromine Test")
-                .HaveNoConsoleErrorsAsync();
+                .Not.HaveConsoleErrorsAsync();
         });
-    }
-
-    // ───────────────────────── sinceNavigationOnly ─────────────────────────
-
-    [Test]
-    public async Task HaveNoConsoleErrorsAsync_SinceNavigationOnly_ShouldIgnoreErrorsFromPreviousPage()
-    {
-        await ClickAndAwaitConsole("error-btn", "button error message");
-
-        await Page.GotoAsync("/about.html");
-
-        await Page.Should().HaveNoConsoleErrorsAsync(sinceNavigationOnly: true);
     }
 }

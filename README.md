@@ -228,10 +228,15 @@ PlaywrightDefaults.Reset();
 New assertions and builder options wrapping what 1.59 added.
 
 ```csharp
-// Console / page-error assertions. Checked once, not retried — console history only grows.
-await page.Should().HaveNoConsoleErrorsAsync();
-await page.Should().HaveNoPageErrorsAsync();
-await page.Should().HaveNoConsoleErrorsAsync(sinceNavigationOnly: true);
+// Console / page-error assertions. The clean-page case — by far the common one — is the
+// negation, and it reports immediately rather than waiting out the assertion timeout.
+await page.Should().Not.HaveConsoleErrorsAsync();
+await page.Should().Not.HavePageErrorsAsync();
+await page.Should().Not.HaveConsoleErrorsAsync(sinceNavigationOnly: true);
+
+// Asserting an error *did* happen retries, since it is usually still in flight.
+await page.Should().HaveConsoleErrorsAsync();
+await page.Should().HavePageErrorsAsync();
 
 // Retried until the assertion timeout, since the message is usually still in flight.
 await page.Should().HaveConsoleMessageAsync("checkout complete");

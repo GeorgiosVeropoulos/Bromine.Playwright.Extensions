@@ -93,105 +93,116 @@ public class FluentPageAssertions : FluentBase<FluentPageAssertions>
     }
 
     /// <summary>
-    /// Asserts that the page logged no <c>error</c>-level console messages.
+    /// Asserts that the page logged at least one <c>error</c>-level console message.
     /// <para>
-    /// Checked once rather than retried: console history only grows, so waiting could never turn
-    /// a failure into a pass. Pair with <see cref="PageExtensions.ClearConsoleAsync"/> to scope the
-    /// assertion to one action, or pass <paramref name="sinceNavigationOnly"/> to ignore anything
-    /// logged before the last navigation. Requires Playwright 1.59 or newer.
+    /// Use <c>Not.HaveConsoleErrorsAsync()</c> to assert a clean page — that is the common case.
+    /// Pair it with <see cref="PageExtensions.ClearConsoleAsync"/> to scope the assertion to one
+    /// action, or pass <paramref name="sinceNavigationOnly"/> to ignore anything logged before the
+    /// last navigation. Requires Playwright 1.59 or newer.
+    /// </para>
+    /// <para>
+    /// Retries when asserting presence and checks once when negated; see
+    /// <see cref="AssertLogHasEntriesAsync"/> for why.
     /// </para>
     /// </summary>
-    public FluentPageAssertions HaveNoConsoleErrorsAsync(bool sinceNavigationOnly = false, string because = "", params object[] becauseArgs)
+    public FluentPageAssertions HaveConsoleErrorsAsync(bool sinceNavigationOnly = false, string because = "", params object[] becauseArgs)
     {
         var negate = NegateNext;
-        AddStep(async () =>
-        {
-            var errors = await _page.GetConsoleErrorsAsync(sinceNavigationOnly);
-            var hasErrors = errors.Count > 0;
-
-            if (negate ? !hasErrors : hasErrors)
-            {
-                if (negate)
-                {
-                    throw new PlaywrightException(
-                        $"Expected page to log at least one console error, but none were recorded. URL: {_page.Url}");
-                }
-
-                var detail = string.Join("\n  ", errors.Select(e => e.Text));
-                throw new PlaywrightException(
-                    $"Expected no console errors, but found {errors.Count}:\n  {detail}\nURL: {_page.Url}");
-            }
-        }, new Because(because, becauseArgs));
+        AddStep(() => AssertLogHasEntriesAsync(
+                negate,
+                async () => (await _page.GetConsoleErrorsAsync(sinceNavigationOnly))
+                    .Select(e => e.Text)
+                    .ToList(),
+                found => $"Expected no console errors, but found {found.Count}:\n  {string.Join("\n  ", found)}\nURL: {_page.Url}",
+                () => $"Expected the page to log a console error, but none were recorded. URL: {_page.Url}"),
+            new Because(because, becauseArgs));
         return this;
     }
 
     /// <summary>
-    /// Asserts that no uncaught exception reached the page.
+    /// Asserts that at least one uncaught exception reached the page.
     /// <para>
-    /// Checked once, for the same reason as <see cref="HaveNoConsoleErrorsAsync"/>.
+    /// Use <c>Not.HavePageErrorsAsync()</c> to assert that nothing threw. Retries when asserting
+    /// presence and checks once when negated, as <see cref="HaveConsoleErrorsAsync"/> does.
     /// Requires Playwright 1.59 or newer.
     /// </para>
     /// </summary>
-    public FluentPageAssertions HaveNoPageErrorsAsync(string because = "", params object[] becauseArgs)
+    public FluentPageAssertions HavePageErrorsAsync(string because = "", params object[] becauseArgs)
     {
         var negate = NegateNext;
-        AddStep(async () =>
-        {
-            var errors = await _page.PageErrorsAsync();
-            var hasErrors = errors.Count > 0;
-
-            if (negate ? !hasErrors : hasErrors)
-            {
-                if (negate)
-                {
-                    throw new PlaywrightException(
-                        $"Expected page to raise at least one uncaught error, but none were recorded. URL: {_page.Url}");
-                }
-
-                var detail = string.Join("\n  ", errors);
-                throw new PlaywrightException(
-                    $"Expected no page errors, but found {errors.Count}:\n  {detail}\nURL: {_page.Url}");
-            }
-        }, new Because(because, becauseArgs));
+        AddStep(() => AssertLogHasEntriesAsync(
+                negate,
+                async () => (await _page.PageErrorsAsync()).ToList(),
+                found => $"Expected no page errors, but found {found.Count}:\n  {string.Join("\n  ", found)}\nURL: {_page.Url}",
+                () => $"Expected the page to raise an uncaught error, but none were recorded. URL: {_page.Url}"),
+            new Because(because, becauseArgs));
         return this;
+    }
+
+    /// <summary>
+    /// Asserts presence or absence of entries in a log that only ever grows — console messages
+    /// and page errors are never removed.
+    /// <para>
+    /// That monotonicity is why the two directions retry differently. Asserting presence retries,
+    /// because the entry may not have reached the driver yet. Asserting absence is checked once:
+    /// a later look can only ever find <em>more</em> entries, so retrying could never turn a
+    /// failure into a pass — it would just spend the whole assertion timeout before reporting one.
+    /// </para>
+    /// </summary>
+    private static async Task AssertLogHasEntriesAsync(
+        bool negate,
+        Func<Task<List<string>>> readEntries,
+        Func<List<string>, string> unexpectedEntriesMessage,
+        Func<string> noEntriesMessage)
+    {
+        if (negate)
+        {
+            var found = await readEntries().ConfigureAwait(false);
+            if (found.Count > 0)
+                throw new PlaywrightException(unexpectedEntriesMessage(found));
+            return;
+        }
+
+        await PollUntilAsync(
+            async () => (await readEntries().ConfigureAwait(false)).Count > 0,
+            noEntriesMessage);
     }
 
     /// <summary>
     /// Asserts that some console message contains <paramref name="expectedSubstring"/>.
     /// <para>
     /// Retried until <see cref="PlaywrightDefaults.AssertionTimeout"/> elapses, because the
-    /// message being waited for is usually still in flight when the assertion runs.
+    /// message being waited for is usually still in flight when the assertion runs. Negated it is
+    /// checked once, for the reason given on <see cref="AssertLogHasEntriesAsync"/>.
     /// Requires Playwright 1.59 or newer.
     /// </para>
     /// </summary>
     public FluentPageAssertions HaveConsoleMessageAsync(string expectedSubstring, string because = "", params object[] becauseArgs)
     {
         var negate = NegateNext;
-        AddStep(async () =>
-        {
-            var lastSeen = new List<string>();
 
-            await PollUntilAsync(
+        // Every message seen on the last read, kept so a failure can show what *was* logged
+        // instead of only what was missing.
+        var allSeen = new List<string>();
+
+        AddStep(() => AssertLogHasEntriesAsync(
+                negate,
                 async () =>
                 {
-                    var messages = await _page.GetConsoleMessagesAsync();
-                    lastSeen = messages.Select(m => m.Text).ToList();
-                    var found = lastSeen.Any(t => t.Contains(expectedSubstring, StringComparison.Ordinal));
-                    return negate ? !found : found;
+                    allSeen = (await _page.GetConsoleMessagesAsync()).Select(m => m.Text).ToList();
+                    return allSeen
+                        .Where(t => t.Contains(expectedSubstring, StringComparison.Ordinal))
+                        .ToList();
                 },
+                _ => $"Expected no console message containing '{expectedSubstring}', but one was logged. URL: {_page.Url}",
                 () =>
                 {
-                    if (negate)
-                    {
-                        return $"Expected no console message containing '{expectedSubstring}', but one was logged. URL: {_page.Url}";
-                    }
-
-                    var detail = lastSeen.Count == 0
+                    var detail = allSeen.Count == 0
                         ? "no console messages were recorded"
-                        : $"recorded messages were:\n  {string.Join("\n  ", lastSeen)}";
+                        : $"recorded messages were:\n  {string.Join("\n  ", allSeen)}";
                     return $"Expected a console message containing '{expectedSubstring}', but {detail}\nURL: {_page.Url}";
-                });
-        }, new Because(because, becauseArgs));
+                }),
+            new Because(because, becauseArgs));
         return this;
     }
 

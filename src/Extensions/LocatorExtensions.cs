@@ -52,6 +52,9 @@ public static class LocatorExtensions
     public static async Task<string> NormalizedSelectorAsync(this ILocator locator)
     {
         var normalized = await locator.NormalizeAsync();
-        return normalized.ToString();
+
+        // ToString() is annotated nullable on object; Playwright's locators always render a
+        // selector, so an empty string is a safer contract here than handing back null.
+        return normalized.ToString() ?? string.Empty;
     }
 }
