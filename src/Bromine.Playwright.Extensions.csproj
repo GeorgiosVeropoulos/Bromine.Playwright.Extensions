@@ -10,7 +10,7 @@
 		<!-- NuGet Package Metadata -->
 		<IsPackable>true</IsPackable>
 		<PackageId>Bromine.Playwright.Extensions</PackageId>
-		<Version>1.3.0</Version>
+		<Version>1.4.0</Version>
 		<Authors>George Veropoulos</Authors>
 		<Company>Bromine</Company>
 		<Description>Playwright extensions library providing fluent assertions (.Should()), browser/context builder patterns, and enhanced Page/Locator extension methods for E2E test automation.</Description>
