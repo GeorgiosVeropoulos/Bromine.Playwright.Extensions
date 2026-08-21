@@ -136,6 +136,7 @@ public class PlaywrightBrowserBuilderTests
         Assert.That(builder.WithProxy("http://proxy:8080"), Is.SameAs(builder));
         Assert.That(builder.WithEnvironment(new Dictionary<string, string> { ["KEY"] = "VALUE" }), Is.SameAs(builder));
         Assert.That(builder.WithTracesDir("/tmp/traces"), Is.SameAs(builder));
+        Assert.That(builder.WithArtifactsDir("/tmp/artifacts"), Is.SameAs(builder));
         Assert.That(builder.HandleSigint(), Is.SameAs(builder));
         Assert.That(builder.HandleSigterm(), Is.SameAs(builder));
         Assert.That(builder.HandleSighup(), Is.SameAs(builder));
@@ -245,6 +246,64 @@ public class PlaywrightBrowserBuilderTests
                 .BuildAsync();
 
             Assert.That(_result.Browser.IsConnected, Is.True);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDir))
+                Directory.Delete(tempDir, recursive: true);
+        }
+    }
+
+    // ───────────────────────── WithArtifactsDir ─────────────────────────
+
+    [Test]
+    public async Task WithArtifactsDir_ShouldLaunchSuccessfully()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), $"pw-artifacts-{Guid.NewGuid()}");
+        Directory.CreateDirectory(tempDir);
+
+        try
+        {
+            _result = await PlaywrightBrowserBuilder.Create()
+                .WithChromium()
+                .Headless()
+                .WithArtifactsDir(tempDir)
+                .BuildAsync();
+
+            Assert.That(_result.Browser.IsConnected, Is.True);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDir))
+                Directory.Delete(tempDir, recursive: true);
+        }
+    }
+
+    [Test]
+    public async Task WithArtifactsDir_ShouldSurviveBrowserClose()
+    {
+        // The documented difference from the default temp directory: Playwright does not clean
+        // this one up, so artifacts are still collectable after the run.
+        var tempDir = Path.Combine(Path.GetTempPath(), $"pw-artifacts-{Guid.NewGuid()}");
+        Directory.CreateDirectory(tempDir);
+
+        try
+        {
+            var result = await PlaywrightBrowserBuilder.Create()
+                .WithChromium()
+                .Headless()
+                .WithArtifactsDir(tempDir)
+                .BuildAsync();
+
+            var context = await result.Browser.NewContextAsync();
+            var page = await context.NewPageAsync();
+            await page.GotoAsync(TestServerFixture.BaseUrl);
+            await context.CloseAsync();
+
+            await result.DisposeAsync();
+            _result = null;
+
+            Assert.That(Directory.Exists(tempDir), Is.True);
         }
         finally
         {

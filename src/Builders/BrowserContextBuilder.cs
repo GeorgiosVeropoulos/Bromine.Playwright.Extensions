@@ -57,6 +57,7 @@ public class BrowserContextBuilder
     private bool _tracingScreenshots;
     private bool _tracingSnapshots;
     private bool _tracingSources;
+    private bool _tracingLive;
 
     private BrowserContextBuilder(IBrowser browser)
     {
@@ -301,6 +302,31 @@ public class BrowserContextBuilder
     }
 
     /// <summary>
+    /// Write the trace to an unarchived file that updates in real time instead of zipping it
+    /// on stop, so it can be opened in the trace viewer while the test is still running.
+    /// <para>
+    /// Enables tracing on its own, so it can either replace <see cref="WithTracing"/> or refine
+    /// it — <c>.WithTracing(sources: false).WithLiveTracing()</c> keeps the flags already set.
+    /// Requires Playwright 1.59 or newer.
+    /// </para>
+    /// </summary>
+    public BrowserContextBuilder WithLiveTracing(bool live = true)
+    {
+        // Called on its own it has to stand in for WithTracing, so adopt the same defaults.
+        // Called after it, _enableTracing is already set and the explicit flags are left alone.
+        if (!_enableTracing)
+        {
+            _tracingScreenshots = true;
+            _tracingSnapshots = true;
+            _tracingSources = true;
+        }
+
+        _enableTracing = true;
+        _tracingLive = live;
+        return this;
+    }
+
+    /// <summary>
     /// Apply a Playwright device descriptor (e.g., from <c>playwright.Devices["iPhone 13"]</c>).
     /// The returned builder can still override individual properties.
     /// </summary>
@@ -365,7 +391,8 @@ public class BrowserContextBuilder
             {
                 Screenshots = _tracingScreenshots,
                 Snapshots = _tracingSnapshots,
-                Sources = _tracingSources
+                Sources = _tracingSources,
+                Live = _tracingLive
             });
         }
 

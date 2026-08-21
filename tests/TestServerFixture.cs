@@ -27,6 +27,11 @@ public class TestServerFixture
 
         _app = builder.Build();
 
+        // Browsers request /favicon.ico for any page without an icon link. Left to 404 it lands
+        // in the console as an *error*, and console history survives navigation — so the 404 from
+        // one page leaks into console assertions made on the next one. 204 keeps every page clean.
+        _app.MapGet("/favicon.ico", () => Results.NoContent());
+
         // ── API endpoints for ResponseAssertionBuilder tests ──
         _app.MapGet("/api/ok", () => Results.Ok(new { success = true, message = "all good" }));
 
@@ -43,6 +48,14 @@ public class TestServerFixture
         {
             ctx.Response.Headers["X-Custom-Header"] = "custom-value";
             return Results.Ok(new { header = "present" });
+        });
+
+        // Stays pending long enough for a request to be observed before its response exists,
+        // which is what IRequest.ExistingResponse is for.
+        _app.MapGet("/api/slow", async () =>
+        {
+            await Task.Delay(2_000);
+            return Results.Ok(new { slow = true });
         });
 
         _app.MapGet("/api/download", () =>

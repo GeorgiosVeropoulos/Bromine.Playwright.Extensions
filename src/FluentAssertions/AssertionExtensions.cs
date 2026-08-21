@@ -49,5 +49,20 @@ public static class AssertionExtensions
     /// </example>
     /// </summary>
     public static FluentAPIResponseAssertions Should(this IAPIResponse response) => new(response);
+
+    /// <summary>
+    /// Start a fluent assertion chain on an <see cref="IResponse"/> — the navigation or network
+    /// response from <c>GotoAsync</c> / <c>WaitForResponseAsync</c>.
+    /// <example>
+    /// <code>
+    /// var response = await page.GotoAsync("/dashboard");
+    /// await response.Should().BeOKAsync();
+    /// await response.Should()
+    ///     .HaveStatusAsync(200)
+    ///     .HaveHttpVersionAsync("HTTP/1.1");
+    /// </code>
+    /// </example>
+    /// </summary>
+    public static FluentResponseAssertions Should(this IResponse response) => new(response);
 }
 

@@ -18,7 +18,7 @@ dotnet add package Bromine.Playwright.Extensions
 Or add to your `.csproj`:
 
 ```xml
-<PackageReference Include="Bromine.Playwright.Extensions" Version="1.0.0" />
+<PackageReference Include="Bromine.Playwright.Extensions" Version="1.3.0" />
 ```
 
 ---
@@ -27,7 +27,7 @@ Or add to your `.csproj`:
 
 ### 1. Fluent Assertions — `.Should()`
 
-Chain-able, readable assertions for `ILocator`, `IPage`, and `IAPIResponse`.
+Chain-able, readable assertions for `ILocator`, `IPage`, `IAPIResponse`, and `IResponse`.
 
 ```csharp
 using Bromine.Playwright.Extensions.Assertions;
@@ -188,6 +188,21 @@ await page.ScrollToTopAsync();
 
 // Downloads
 string filePath = await page.ClickAndDownloadAsync("#export-btn", "./downloads");
+
+// Console and page errors (Playwright 1.59+)
+var messages = await page.GetConsoleMessagesAsync();
+var errors = await page.GetConsoleErrorsAsync(sinceNavigationOnly: true);
+await page.ClearConsoleAsync();
+
+// Aria snapshots (Playwright 1.59+)
+string snapshot = await page.GetAriaSnapshotAsync();
+string forAi = await page.GetAriaSnapshotForAiAsync(depth: 2);
+
+// Screencast (Playwright 1.59+)
+string video = await page.RecordScreencastAsync("./videos/checkout.webm", async () =>
+{
+    await page.Locator("#checkout").ClickAsync();
+});
 ```
 
 ### 5. Global Configuration
@@ -207,6 +222,79 @@ PlaywrightDefaults.RetryDelayMs = 500;           // 500ms between retries (defau
 // Reset to defaults
 PlaywrightDefaults.Reset();
 ```
+
+### 6. Playwright 1.59 APIs
+
+New assertions and builder options wrapping what 1.59 added.
+
+```csharp
+// Console / page-error assertions. The clean-page case — by far the common one — is the
+// negation, and it reports immediately rather than waiting out the assertion timeout.
+await page.Should().Not.HaveConsoleErrorsAsync();
+await page.Should().Not.HavePageErrorsAsync();
+await page.Should().Not.HaveConsoleErrorsAsync(sinceNavigationOnly: true);
+
+// Asserting an error *did* happen retries, since it is usually still in flight.
+await page.Should().HaveConsoleErrorsAsync();
+await page.Should().HavePageErrorsAsync();
+
+// Retried until the assertion timeout, since the message is usually still in flight.
+await page.Should().HaveConsoleMessageAsync("checkout complete");
+
+// Whole-page aria snapshot, matched with Playwright's own subset rules
+await page.Should().MatchAriaSnapshotAsync("""
+                                           - heading "Dashboard" [level=1]
+                                           """);
+
+// Navigation / network responses
+var response = await page.GotoAsync("/dashboard");
+await response.Should()
+    .BeOKAsync()
+    .HaveStatusAsync(200)
+    .HaveHttpVersionAsync("HTTP/1.1");
+
+// Artifacts that survive browser close
+await using var result = await PlaywrightBrowserBuilder.Create()
+    .WithArtifactsDir("./artifacts")
+    .BuildAsync();
+
+// Trace written live instead of zipped on stop
+var context = await BrowserContextBuilder.For(result.Browser)
+    .WithLiveTracing()
+    .BuildAsync();
+
+// Swap identity without discarding the context
+await context.SwitchStorageStateAsync("./state/admin.json");
+
+// Resilient selector for a brittle CSS one
+string selector = await page.Locator("#main-heading").NormalizedSelectorAsync();
+
+// Response already received? No await.
+if (request.HasResponse()) { /* ... */ }
+var maybe = await request.GetResponseAsync(timeoutMs: 500);   // null on timeout
+```
+
+#### Caveats found while testing 1.59
+
+Verified against Microsoft.Playwright 1.59.0 on Chromium, Firefox and WebKit:
+
+| API | Status |
+|---|---|
+| `AriaSnapshotOptions.Depth` | Only honoured for **page-level `Mode.Ai`** snapshots. Ignored in default mode and for locator snapshots. Use `GetAriaSnapshotForAiAsync(depth:)`. |
+| `Screencast.ShowChapterAsync` | Broken in the .NET binding — the driver rejects `Page.overlayChapter`. Not wrapped. |
+| `Screencast.ShowOverlayAsync` / `ShowOverlaysAsync` / `HideOverlaysAsync` | Broken in the .NET binding — driver rejects `Page.overlayShow` / `Page.overlaySetVisible`. Not wrapped. |
+| `Screencast.ShowActionsAsync` / `HideActionsAsync` | Work. Wrapped as `ShowScreencastActionsAsync` / `HideScreencastActionsAsync`. |
+
+#### Intentionally not wrapped
+
+These 1.59 additions are interactive or dev-tooling APIs, outside what a test assertion library
+should expose — they need a human, a headed browser, or an open port, and cannot be asserted in
+CI. Use them directly off the Playwright objects if you need them.
+
+- `IBrowserContext.Debugger` / `IDebugger` — attaches an interactive debugger
+- `IPage.PickLocatorAsync` / `CancelPickLocatorAsync` — interactive locator picker
+- `IBrowser.BindAsync` / `UnbindAsync` — exposes the browser to `playwright-cli` over a port
+- `ICDPSession.Close` event — Chromium-only, low level
 
 ---
 
@@ -315,7 +403,7 @@ The `.nupkg` includes the library DLL, XML docs, and the bundled Roslyn analyzer
 dotnet nuget add source /path/to/nupkgs --name LocalBromine
 
 # Install
-dotnet add package Bromine.Playwright.Extensions --version 1.0.0
+dotnet add package Bromine.Playwright.Extensions --version 1.3.0
 ```
 
 ---
@@ -323,7 +411,7 @@ dotnet add package Bromine.Playwright.Extensions --version 1.0.0
 ## Requirements
 
 - .NET 8.0+
-- Microsoft.Playwright 1.56.0+
+- Microsoft.Playwright 1.59.0+
 
 ## License
 

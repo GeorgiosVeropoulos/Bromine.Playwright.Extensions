@@ -283,5 +283,165 @@ public static class PageExtensions
         await download.SaveAsAsync(savePath);
         return savePath;
     }
+
+    /// <summary>
+    /// Get the console messages Playwright has recorded for this page, oldest first.
+    /// <para>
+    /// Unlike the <c>Page.Console</c> event this reads messages retroactively, so there is no
+    /// handler to attach before navigating. Playwright currently retains the last 200 messages.
+    /// Pass <paramref name="sinceNavigationOnly"/> to drop everything logged before the most
+    /// recent navigation. Requires Playwright 1.59 or newer.
+    /// </para>
+    /// </summary>
+    public static async Task<IReadOnlyList<IConsoleMessage>> GetConsoleMessagesAsync(
+        this IPage page,
+        bool sinceNavigationOnly = false)
+    {
+        return await page.ConsoleMessagesAsync(new PageConsoleMessagesOptions
+        {
+            Filter = sinceNavigationOnly
+                ? ConsoleMessagesFilter.SinceNavigation
+                : ConsoleMessagesFilter.All
+        });
+    }
+
+    /// <summary>
+    /// Get only the <c>error</c>-level console messages recorded for this page.
+    /// </summary>
+    public static async Task<IReadOnlyList<IConsoleMessage>> GetConsoleErrorsAsync(
+        this IPage page,
+        bool sinceNavigationOnly = false)
+    {
+        var messages = await page.GetConsoleMessagesAsync(sinceNavigationOnly);
+        return messages
+            .Where(m => string.Equals(m.Type, "error", StringComparison.Ordinal))
+            .ToList();
+    }
+
+    /// <summary>
+    /// Discard every console message and page error recorded so far.
+    /// <para>
+    /// Useful between the arrange and act phases of a test, so a later
+    /// <c>Not.HaveConsoleErrorsAsync()</c> only sees what the action itself produced.
+    /// </para>
+    /// </summary>
+    public static async Task ClearConsoleAsync(this IPage page)
+    {
+        await page.ClearConsoleMessagesAsync();
+        await page.ClearPageErrorsAsync();
+    }
+
+    /// <summary>
+    /// Capture the page's aria snapshot. Equivalent to snapshotting the <c>body</c> locator.
+    /// <para>
+    /// <paramref name="depth"/> only has an effect in <see cref="AriaSnapshotMode.Ai"/>, whose
+    /// output is a nested tree; the default mode returns a flat list that Playwright 1.59 does
+    /// not truncate. Use <see cref="GetAriaSnapshotForAiAsync"/> when depth matters.
+    /// </para>
+    /// </summary>
+    public static async Task<string> GetAriaSnapshotAsync(
+        this IPage page,
+        int? depth = null,
+        AriaSnapshotMode? mode = null,
+        float? timeoutMs = null)
+    {
+        return await page.AriaSnapshotAsync(new PageAriaSnapshotOptions
+        {
+            Depth = depth,
+            Mode = mode,
+            Timeout = timeoutMs ?? PlaywrightDefaults.ActionTimeout
+        });
+    }
+
+    /// <summary>
+    /// Capture the page's aria snapshot in the AI-optimised shape
+    /// (<see cref="AriaSnapshotMode.Ai"/>), for handing page structure to a model.
+    /// </summary>
+    public static Task<string> GetAriaSnapshotForAiAsync(
+        this IPage page,
+        int? depth = null,
+        float? timeoutMs = null)
+        => page.GetAriaSnapshotAsync(depth, AriaSnapshotMode.Ai, timeoutMs);
+
+    /// <summary>
+    /// Start recording a screencast to <paramref name="savePath"/>, creating the directory if
+    /// it does not exist. The video is written when the screencast stops.
+    /// <para>
+    /// Either <c>await using</c> the returned handle or call <see cref="StopScreencastAsync"/>.
+    /// Requires Playwright 1.59 or newer.
+    /// </para>
+    /// </summary>
+    public static async Task<IAsyncDisposable> StartScreencastAsync(
+        this IPage page,
+        string savePath,
+        int? quality = null)
+    {
+        var directory = Path.GetDirectoryName(savePath);
+        if (!string.IsNullOrEmpty(directory))
+            Directory.CreateDirectory(directory);
+
+        return await page.Screencast.StartAsync(new ScreencastStartOptions
+        {
+            Path = savePath,
+            Quality = quality
+        });
+    }
+
+    /// <summary>
+    /// Stop the screencast and write the video to the path it was started with.
+    /// </summary>
+    public static Task StopScreencastAsync(this IPage page) => page.Screencast.StopAsync();
+
+    /// <summary>
+    /// Record a screencast of <paramref name="action"/> and return the saved video path.
+    /// The screencast is stopped even if the action throws.
+    /// </summary>
+    public static async Task<string> RecordScreencastAsync(
+        this IPage page,
+        string savePath,
+        Func<Task> action,
+        int? quality = null)
+    {
+        _ = await page.StartScreencastAsync(savePath, quality);
+        try
+        {
+            await action();
+        }
+        finally
+        {
+            await page.StopScreencastAsync();
+        }
+
+        return savePath;
+    }
+
+    /// <summary>
+    /// Annotate the running screencast with the action Playwright is performing, so the recorded
+    /// video shows what each step was doing.
+    /// <para>
+    /// Turn the annotations back off with <see cref="HideScreencastActionsAsync"/>.
+    /// </para>
+    /// </summary>
+    public static async Task ShowScreencastActionsAsync(
+        this IPage page,
+        AnnotatePosition? position = null,
+        float? durationMs = null,
+        int? fontSize = null)
+    {
+        // Playwright 1.59 returns a no-op disposable here, so scoping it with `await using`
+        // would silently do nothing — HideScreencastActionsAsync is the real off switch.
+        _ = await page.Screencast.ShowActionsAsync(new ScreencastShowActionsOptions
+        {
+            Position = position,
+            Duration = durationMs,
+            FontSize = fontSize
+        });
+    }
+
+    /// <summary>
+    /// Stop annotating the running screencast with actions.
+    /// </summary>
+    public static Task HideScreencastActionsAsync(this IPage page)
+        => page.Screencast.HideActionsAsync();
 }
 
