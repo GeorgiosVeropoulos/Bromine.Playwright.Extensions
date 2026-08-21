@@ -18,6 +18,9 @@ public class PageConsoleTests : TestBase
     [SetUp]
     public async Task GoToConsolePage()
     {
+        // See PageShouldConsoleTests: drop anything the "/" navigation logged so these tests
+        // only ever see console.html's own output.
+        await Page.ClearConsoleAsync();
         await Page.GotoAsync("/console.html");
     }
 

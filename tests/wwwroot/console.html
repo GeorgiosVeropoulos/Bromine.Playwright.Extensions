@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Console - Bromine Test</title>
-    <!-- Suppresses the favicon request. Without it the 404 is logged as a console *error* in
-         Chromium, which would make every "no console errors" assertion here fail. -->
+    <!-- Avoids the favicon request entirely. TestServerFixture also serves /favicon.ico with a
+         204 so no page 404s on it, but skipping the request keeps this page's console output to
+         exactly what the buttons below produce. -->
     <link rel="icon" href="data:,">
 </head>
 <body>

@@ -27,6 +27,11 @@ public class TestServerFixture
 
         _app = builder.Build();
 
+        // Browsers request /favicon.ico for any page without an icon link. Left to 404 it lands
+        // in the console as an *error*, and console history survives navigation — so the 404 from
+        // one page leaks into console assertions made on the next one. 204 keeps every page clean.
+        _app.MapGet("/favicon.ico", () => Results.NoContent());
+
         // ── API endpoints for ResponseAssertionBuilder tests ──
         _app.MapGet("/api/ok", () => Results.Ok(new { success = true, message = "all good" }));
 

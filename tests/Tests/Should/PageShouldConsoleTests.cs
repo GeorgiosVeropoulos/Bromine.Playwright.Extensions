@@ -18,6 +18,10 @@ public class PageShouldConsoleTests : TestBase
     [SetUp]
     public async Task GoToConsolePage()
     {
+        // Discard whatever TestBase's opening navigation to "/" logged before moving on, so
+        // these assertions only ever see console.html's own output. Defence in depth: the
+        // server serves /favicon.ico precisely so there is nothing to discard.
+        await Page.ClearConsoleAsync();
         await Page.GotoAsync("/console.html");
     }
 
