@@ -70,6 +70,18 @@ public class LocatorDropTests : TestBase
     }
 
     [Test]
+    public async Task DropFilesAsync_ShouldAcceptATimeoutWithoutAPosition()
+    {
+        // The options helper builds LocatorDropOptions when either argument is set, so a timeout
+        // on its own must still leave Position unset rather than assigning null.
+        var path = await WriteTempFileAsync("timed.txt", "abcd");
+
+        await Zone.DropFilesAsync([path], timeoutMs: 10_000);
+
+        await DroppedFiles.Should().HaveTextAsync("timed.txt:4");
+    }
+
+    [Test]
     public async Task DropFilesAsync_ShouldAcceptAPosition()
     {
         var path = await WriteTempFileAsync("positioned.txt", "xyz");

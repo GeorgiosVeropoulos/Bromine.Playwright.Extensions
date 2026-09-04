@@ -209,6 +209,22 @@ public class PageShouldConsoleTests : TestBase
     }
 
     [Test]
+    public async Task HaveConsoleMessageAsync_ShouldReportThatNothingWasLogged_WhenConsoleIsEmpty()
+    {
+        // The failure message has two shapes — one listing what was recorded, one saying nothing
+        // was. This covers the empty shape, which needs a page that logs nothing at all.
+        await Page.GotoAsync("/about.html");
+        await Page.ClearConsoleAsync();
+
+        var ex = Assert.ThrowsAsync<PlaywrightException>(async () =>
+        {
+            await Page.Should().HaveConsoleMessageAsync("nothing will be logged here");
+        });
+
+        Assert.That(ex!.Message, Does.Contain("no console messages were recorded"));
+    }
+
+    [Test]
     public async Task Not_HaveConsoleMessageAsync_ShouldPass_WhenMessageWasNeverLogged()
     {
         await Page.Should().Not.HaveConsoleMessageAsync("a message no button ever logs");

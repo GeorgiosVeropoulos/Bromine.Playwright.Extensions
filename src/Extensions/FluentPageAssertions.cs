@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 using Bromine.Playwright.Extensions.Configuration;
 using Bromine.Playwright.Extensions.Reason;
@@ -110,6 +111,10 @@ public class FluentPageAssertions : FluentBase<FluentPageAssertions>
     [Obsolete("Pass PageAssertionsToMatchAriaSnapshotOptions instead. This assertion now uses " +
               "Playwright's native page-level matcher, so the page option type is the correct one. " +
               "Both types carry only Timeout, so the change is mechanical.")]
+    // Excluded from coverage rather than tested: it exists only to keep 1.3.0 callers compiling,
+    // and it forwards to the overload above, which is covered. Adding tests for a method we are
+    // trying to retire would mean maintaining them until it is removed.
+    [ExcludeFromCodeCoverage]
     public FluentPageAssertions MatchAriaSnapshotAsync(string expected, LocatorAssertionsToMatchAriaSnapshotOptions options, string because = "", params object[] becauseArgs)
         => MatchAriaSnapshotAsync(
             expected,

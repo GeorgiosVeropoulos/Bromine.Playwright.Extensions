@@ -63,6 +63,17 @@ public class AriaSnapshotTests : TestBase
     }
 
     [Test]
+    public async Task Locator_GetAriaSnapshotAsync_ShouldAcceptAnExplicitTimeout()
+    {
+        // Exercises the timeout argument rather than the PlaywrightDefaults fallback, which is
+        // the path every other call here takes.
+        var snapshot = await Page.Locator("[data-testid=navigation]")
+            .GetAriaSnapshotAsync(timeoutMs: 10_000);
+
+        Assert.That(snapshot, Does.Contain("About"));
+    }
+
+    [Test]
     public async Task Locator_GetAriaSnapshotForAiAsync_ShouldForwardAiMode()
     {
         var locator = Page.Locator("[data-testid=navigation]");

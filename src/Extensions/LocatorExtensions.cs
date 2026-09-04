@@ -51,11 +51,10 @@ public static class LocatorExtensions
     /// </summary>
     public static async Task<string> NormalizedSelectorAsync(this ILocator locator)
     {
-        var normalized = await locator.NormalizeAsync();
-
-        // ToString() is annotated nullable on object; Playwright's locators always render a
-        // selector, so an empty string is a safer contract here than handing back null.
-        return normalized.ToString() ?? string.Empty;
+        // ToString() carries object's nullable annotation, but a Playwright locator always renders
+        // a selector. Suppressing rather than coalescing keeps this branch-free: a `?? ""` fallback
+        // could never be reached, so it would sit in the coverage report as a permanent partial.
+        return (await locator.NormalizeAsync()).ToString()!;
     }
 
     /// <summary>
