@@ -18,7 +18,7 @@ dotnet add package Bromine.Playwright.Extensions
 Or add to your `.csproj`:
 
 ```xml
-<PackageReference Include="Bromine.Playwright.Extensions" Version="1.4.0" />
+<PackageReference Include="Bromine.Playwright.Extensions" Version="1.5.0" />
 ```
 
 ---
@@ -383,6 +383,68 @@ This library uses none of these, so upgrading is safe for it — but your own te
   `IWebSocketRoute.Protocols`, `WebErrorLocation` — CLI, infrastructure, or areas the library does
   not cover
 
+### 8. Playwright 1.61 APIs
+
+```csharp
+using Bromine.Playwright.Extensions.Assertions;
+using Bromine.Playwright.Extensions.Extensions;
+
+// Web storage assertions on page.LocalStorage / page.SessionStorage
+await page.Should().HaveLocalStorageItemAsync("session-id");             // present, any value
+await page.Should().HaveLocalStorageItemAsync("feature-flag", "on");     // exact value
+await page.Should().Not.HaveLocalStorageItemAsync("legacy-token");       // absent
+await page.Should().HaveSessionStorageItemAsync("wizard-step", "3");
+
+// Screencast with any ScreencastStartOptions — an explicit video size, quality, OnFrame —
+// without a parameter per option
+string video = await page.RecordScreencastAsync("./videos/run.webm",
+    new ScreencastStartOptions { Size = new() { Width = 1280, Height = 720 } },
+    () => page.Locator("#checkout").ClickAsync());
+
+// Action annotations with the pointer cursor marker 1.61 added
+await page.ShowScreencastActionsAsync(new ScreencastShowActionsOptions
+{
+    Cursor = ScreencastCursor.Pointer
+});
+```
+
+The storage assertions retry in **both** directions until the assertion timeout: storage is
+mutable state — apps write and remove items asynchronously — so a later look can change the
+outcome either way, unlike the append-only console and page-error assertions.
+
+The options-taking screencast overloads copy the options (the caller's instance is never mutated)
+and always write to the `savePath` argument — `options.Path` is overridden — so the file produced
+is the one the call names, and the target directory is created as with the simple overloads.
+
+#### Caveats found while testing 1.61
+
+Verified against Microsoft.Playwright 1.61.0 on Chromium, Firefox and WebKit:
+
+| API | Status |
+|---|---|
+| `Page.LocalStorage` / `Page.SessionStorage` | Work fully on all three engines — set/get/items/remove/clear, missing keys read as `null`, state survives same-origin navigation. |
+| `ScreencastStartOptions.Size` | Works on all three engines (verified via the WebM headers of the produced videos). |
+| `ScreencastShowActionsOptions.Cursor` | Works on all three engines. |
+| `IAPIResponse.ServerAddrAsync` | **Returns `null` for `localhost` URLs.** Target `127.0.0.1` or a real host to get an address. |
+| `IAPIResponse.SecurityDetailsAsync` | Returns `null` over plain HTTP — only meaningful for HTTPS endpoints. |
+| `ScreencastFrame.Timestamp` | Delivered on all engines, but the unit and origin differ per engine (Chromium: Unix epoch ms; Firefox and WebKit: different internal clocks). Don't compare across engines. |
+
+#### Breaking changes in Playwright 1.61
+
+None — 1.61 adds 35 members to the .NET surface and removes nothing.
+
+#### Intentionally not wrapped from 1.61
+
+- `IBrowserContext.Credentials` (`ICredentials` — WebAuthn passkeys) — virtual-authenticator state
+  setup rather than assertions, and historically Chromium-only; revisit if suites start testing
+  passkey flows
+- `IAPIResponse.ServerAddrAsync` / `SecurityDetailsAsync` — plain one-call getters that Playwright
+  already makes ergonomic; nothing for an assertion library to add beyond the caveats above
+- `BrowserTypeConnectOverCDPOptions.ArtifactsDir` — the builder wraps launching browsers, not
+  remote CDP connection
+- `ScreencastStartOptions.OnFrame` / `ScreencastFrame.Timestamp` — event plumbing; pass `OnFrame`
+  yourself through the options-taking `StartScreencastAsync` overload if you need it
+
 ---
 
 ## Static Analysis — Unawaited Assertion Detection
@@ -490,7 +552,7 @@ The `.nupkg` includes the library DLL, XML docs, and the bundled Roslyn analyzer
 dotnet nuget add source /path/to/nupkgs --name LocalBromine
 
 # Install
-dotnet add package Bromine.Playwright.Extensions --version 1.4.0
+dotnet add package Bromine.Playwright.Extensions --version 1.5.0
 ```
 
 ---
@@ -498,7 +560,7 @@ dotnet add package Bromine.Playwright.Extensions --version 1.4.0
 ## Requirements
 
 - .NET 8.0+
-- Microsoft.Playwright 1.60.0+
+- Microsoft.Playwright 1.61.0+
 
 ## License
 

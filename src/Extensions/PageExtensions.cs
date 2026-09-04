@@ -388,6 +388,27 @@ public static class PageExtensions
     }
 
     /// <summary>
+    /// Start recording a screencast to <paramref name="savePath"/> with full control over the
+    /// remaining <see cref="ScreencastStartOptions"/> — video size (Playwright 1.61+), quality,
+    /// or an <c>OnFrame</c> callback — without a parameter per option.
+    /// <para>
+    /// The options are copied, never mutated, and <paramref name="savePath"/> always wins over
+    /// <see cref="ScreencastStartOptions.Path"/>, so the file written is the one this call names.
+    /// </para>
+    /// </summary>
+    public static async Task<IAsyncDisposable> StartScreencastAsync(
+        this IPage page,
+        string savePath,
+        ScreencastStartOptions options)
+    {
+        var directory = Path.GetDirectoryName(savePath);
+        if (!string.IsNullOrEmpty(directory))
+            Directory.CreateDirectory(directory);
+
+        return await page.Screencast.StartAsync(new ScreencastStartOptions(options) { Path = savePath });
+    }
+
+    /// <summary>
     /// Stop the screencast and write the video to the path it was started with.
     /// </summary>
     public static Task StopScreencastAsync(this IPage page) => page.Screencast.StopAsync();
@@ -403,6 +424,31 @@ public static class PageExtensions
         int? quality = null)
     {
         _ = await page.StartScreencastAsync(savePath, quality);
+        try
+        {
+            await action();
+        }
+        finally
+        {
+            await page.StopScreencastAsync();
+        }
+
+        return savePath;
+    }
+
+    /// <summary>
+    /// Record a screencast of <paramref name="action"/> with full control over the remaining
+    /// <see cref="ScreencastStartOptions"/>, and return the saved video path. The options are
+    /// handled as <see cref="StartScreencastAsync(IPage, string, ScreencastStartOptions)"/>
+    /// describes; the screencast is stopped even if the action throws.
+    /// </summary>
+    public static async Task<string> RecordScreencastAsync(
+        this IPage page,
+        string savePath,
+        ScreencastStartOptions options,
+        Func<Task> action)
+    {
+        _ = await page.StartScreencastAsync(savePath, options);
         try
         {
             await action();
@@ -437,6 +483,19 @@ public static class PageExtensions
             FontSize = fontSize
         });
     }
+
+    /// <summary>
+    /// Annotate the running screencast with full control over
+    /// <see cref="ScreencastShowActionsOptions"/> — including the pointer <c>Cursor</c> marker
+    /// Playwright 1.61 added — without a parameter per option.
+    /// <para>
+    /// Returns a plain <see cref="Task"/> rather than the raw API's <see cref="IAsyncDisposable"/>,
+    /// which is a no-op stub whose <c>await using</c> would silently do nothing —
+    /// <see cref="HideScreencastActionsAsync"/> is the real off switch.
+    /// </para>
+    /// </summary>
+    public static async Task ShowScreencastActionsAsync(this IPage page, ScreencastShowActionsOptions options)
+        => _ = await page.Screencast.ShowActionsAsync(options);
 
     /// <summary>
     /// Stop annotating the running screencast with actions.
