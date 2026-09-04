@@ -237,6 +237,80 @@ public class FluentPageAssertions : FluentBase<FluentPageAssertions>
     }
 
     /// <summary>
+    /// Asserts that the page's local storage has an item named <paramref name="name"/> — holding
+    /// exactly <paramref name="expectedValue"/> when one is given, holding anything otherwise.
+    /// <para>
+    /// Retries in both directions until <see cref="PlaywrightDefaults.AssertionTimeout"/> elapses.
+    /// Storage is mutable state — apps write and remove items asynchronously after the actions
+    /// that trigger them — so a later look can change the outcome either way, unlike the
+    /// append-only console and page-error logs. Requires Playwright 1.61 or newer.
+    /// </para>
+    /// </summary>
+    public FluentPageAssertions HaveLocalStorageItemAsync(string name, string? expectedValue = null, string because = "", params object[] becauseArgs)
+        => HaveStorageItemAsync(() => _page.LocalStorage, "local storage", name, expectedValue, because, becauseArgs);
+
+    /// <summary>
+    /// Asserts that the page's session storage has an item named <paramref name="name"/> — holding
+    /// exactly <paramref name="expectedValue"/> when one is given, holding anything otherwise.
+    /// Retries in both directions, as <see cref="HaveLocalStorageItemAsync"/> does.
+    /// Requires Playwright 1.61 or newer.
+    /// </summary>
+    public FluentPageAssertions HaveSessionStorageItemAsync(string name, string? expectedValue = null, string because = "", params object[] becauseArgs)
+        => HaveStorageItemAsync(() => _page.SessionStorage, "session storage", name, expectedValue, because, becauseArgs);
+
+    private FluentPageAssertions HaveStorageItemAsync(
+        Func<IWebStorage> storage,
+        string storageName,
+        string name,
+        string? expectedValue,
+        string because,
+        object[] becauseArgs)
+    {
+        var negate = NegateNext;
+
+        // Everything seen on the last poll, kept so a failure can show what *is* stored
+        // instead of only what was missing.
+        IReadOnlyList<WebStorageItem> lastItems = [];
+
+        AddStep(() => PollUntilAsync(
+                async () =>
+                {
+                    lastItems = await storage().ItemsAsync().ConfigureAwait(false);
+                    var item = lastItems.FirstOrDefault(i => i.Name == name);
+                    var matches = expectedValue is null
+                        ? item is not null
+                        : item is not null && item.Value == expectedValue;
+                    return negate ? !matches : matches;
+                },
+                () => StorageFailureMessage(negate, storageName, name, expectedValue, lastItems)),
+            new Because(because, becauseArgs));
+        return this;
+    }
+
+    private string StorageFailureMessage(
+        bool negate,
+        string storageName,
+        string name,
+        string? expectedValue,
+        IReadOnlyList<WebStorageItem> items)
+    {
+        var item = items.FirstOrDefault(i => i.Name == name);
+
+        if (negate)
+            return expectedValue is null
+                ? $"Expected {storageName} to have no item named '{name}', but it has value '{item?.Value}'. URL: {_page.Url}"
+                : $"Expected {storageName} item '{name}' not to have value '{expectedValue}', but it does. URL: {_page.Url}";
+
+        if (item is not null)
+            return $"Expected {storageName} item '{name}' to have value '{expectedValue}', but found '{item.Value}'. URL: {_page.Url}";
+
+        var stored = items.Count == 0
+            ? $"the {storageName} is empty"
+            : $"stored items were:\n  {string.Join("\n  ", items.Select(i => $"{i.Name}={i.Value}"))}";
+        return $"Expected a {storageName} item named '{name}', but {stored}\nURL: {_page.Url}";
+    }
+
+    /// <summary>
     /// Polls <paramref name="condition"/> until it holds or the assertion timeout elapses,
     /// mirroring how Playwright's own web-first assertions retry.
     /// </summary>
