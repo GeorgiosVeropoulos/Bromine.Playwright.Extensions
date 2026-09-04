@@ -1,0 +1,10 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Upstream Playwright .NET bug
+    url: https://github.com/microsoft/playwright-dotnet/issues
+    about: >-
+      Defects in Microsoft.Playwright itself — including everything listed in this repo's
+      README "Caveats found while testing" tables — belong upstream.
+  - name: Contributing guide
+    url: https://github.com/GeorgiosVeropoulos/Bromine.Playwright.Extensions/blob/master/CONTRIBUTING.md
+    about: Dev setup, running the cross-engine test suite, and the design rules PRs should follow.

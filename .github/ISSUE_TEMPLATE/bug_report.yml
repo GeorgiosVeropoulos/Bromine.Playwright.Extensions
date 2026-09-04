@@ -1,0 +1,83 @@
+name: Bug report
+description: Something in the library misbehaves — an assertion, extension, builder, or the analyzer.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing, please check the **"Caveats found while testing"** tables in the
+        [README](https://github.com/GeorgiosVeropoulos/Bromine.Playwright.Extensions/blob/master/README.md)
+        — several surprising behaviours are documented **upstream Playwright defects**, not bugs in
+        this library. Those belong at
+        [microsoft/playwright-dotnet](https://github.com/microsoft/playwright-dotnet/issues).
+
+  - type: input
+    id: package-version
+    attributes:
+      label: Bromine.Playwright.Extensions version
+      placeholder: "1.5.0"
+    validations:
+      required: true
+
+  - type: input
+    id: playwright-version
+    attributes:
+      label: Microsoft.Playwright version
+      placeholder: "1.61.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: engines
+    attributes:
+      label: Engines it reproduces on
+      description: Select every engine you tried it on and saw the problem.
+      multiple: true
+      options:
+        - Chromium
+        - Firefox
+        - WebKit
+        - Not engine-related (builder, analyzer, packaging)
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: A minimal repro — ideally a failing test deriving `TestBase`.
+      render: csharp
+      placeholder: |
+        [Test]
+        public async Task Repro()
+        {
+            await Page.LocalStorage.SetItemAsync("key", "value");
+            await Page.Should().HaveLocalStorageItemAsync("key", "other");
+        }
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include the full failure message or stack trace — it is usually the whole story.
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, architecture, and target framework.
+      placeholder: "macOS 15 (arm64), net8.0"
+    validations:
+      required: false

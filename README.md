@@ -562,6 +562,11 @@ dotnet add package Bromine.Playwright.Extensions --version 1.5.0
 - .NET 8.0+
 - Microsoft.Playwright 1.61.0+
 
+## Contributing
+
+Issues and pull requests are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for the dev setup,
+how to run the cross-engine test suite, and the design rules the library follows.
+
 ## License
 
 MIT

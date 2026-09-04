@@ -1,0 +1,52 @@
+name: API coverage request
+description: Ask for a Playwright API to be wrapped — a new assertion, extension, or builder option.
+title: "[Coverage]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This library wraps the parts of Playwright that make **automated E2E tests** nicer to
+        write. The scope test for any addition: *could an automated test ever assert on it?*
+        Interactive and dev-tooling APIs (debuggers, pick-locator, event plumbing) are
+        intentionally out — the README's *"Intentionally not wrapped"* lists say why, so please
+        check them first.
+
+  - type: input
+    id: api
+    attributes:
+      label: Playwright API to cover
+      description: The exact member, as the .NET bindings spell it.
+      placeholder: "IBrowserContext.Credentials / ICredentials"
+    validations:
+      required: true
+
+  - type: input
+    id: since
+    attributes:
+      label: Available since
+      placeholder: "Microsoft.Playwright 1.61.0"
+    validations:
+      required: false
+
+  - type: textarea
+    id: assertion
+    attributes:
+      label: What would a test assert with it?
+      description: The concrete check a real suite would make — this is what decides scope.
+      placeholder: |
+        After registering a passkey through the UI, assert the virtual authenticator now
+        holds a credential for the site's RP ID.
+    validations:
+      required: true
+
+  - type: textarea
+    id: shape
+    attributes:
+      label: Proposed shape (optional)
+      description: What you'd want to write in a test — assertion, extension, or builder option.
+      render: csharp
+      placeholder: |
+        await page.Context.Should().HaveCredentialAsync(rpId: "example.com");
+    validations:
+      required: false
